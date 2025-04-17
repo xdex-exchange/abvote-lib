@@ -1,32 +1,5 @@
-"use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
   return value;
@@ -54,30 +27,18 @@ var __privateMethod = (obj, member, method) => {
   return method;
 };
 
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  ExponentService: () => ExponentService,
-  VoteSource: () => VoteSource,
-  VotedAB: () => VotedAB,
-  computeIndexPrice: () => computeIndexPrice,
-  computeIndexPriceWithLogReturnWeightedExponent: () => computeIndexPriceWithLogReturnWeightedExponent,
-  computeLogReturn: () => computeLogReturn
-});
-module.exports = __toCommonJS(src_exports);
-
 // src/algorithm/math.ts
-var import_decimal = __toESM(require("decimal.js"));
+import Decimal from "decimal.js";
 var computeLogReturn = (current, previous) => {
   if (previous.lte(0) || current.lte(0))
-    return new import_decimal.default(0);
+    return new Decimal(0);
   return current.div(previous).log();
 };
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
+// node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/properties.js
+// node_modules/ethers/lib.esm/utils/properties.js
 function checkType(value, type, name) {
   const types = type.split("|").map((t) => t.trim());
   for (let i = 0; i < types.length; i++) {
@@ -110,7 +71,7 @@ function defineProperties(target, values, types) {
   }
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/errors.js
+// node_modules/ethers/lib.esm/utils/errors.js
 function stringify(value) {
   if (value == null) {
     return "null";
@@ -233,7 +194,7 @@ function assertPrivate(givenGuard, guard, className) {
   }
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/data.js
+// node_modules/ethers/lib.esm/utils/data.js
 function _getBytes(value, name, copy) {
   if (value instanceof Uint8Array) {
     if (copy) {
@@ -256,7 +217,7 @@ function getBytes(value, name) {
   return _getBytes(value, name, false);
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/maths.js
+// node_modules/ethers/lib.esm/utils/maths.js
 var BN_0 = BigInt(0);
 var BN_1 = BigInt(1);
 var maxValue = 9007199254740991;
@@ -345,7 +306,7 @@ function getNumber(value, name) {
   assertArgument(false, "invalid numeric value", name || "value", value);
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/fixednumber.js
+// node_modules/ethers/lib.esm/utils/fixednumber.js
 var BN_N1 = BigInt(-1);
 var BN_02 = BigInt(0);
 var BN_12 = BigInt(1);
@@ -849,7 +810,7 @@ div_fn = function(o, safeOp) {
 };
 var FixedNumber = _FixedNumber;
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/units.js
+// node_modules/ethers/lib.esm/utils/units.js
 var names = [
   "wei",
   "kwei",
@@ -976,35 +937,35 @@ var ExponentService = class {
 };
 
 // src/algorithm/indexPrice.ts
-var import_decimal2 = __toESM(require("decimal.js"));
+import Decimal2 from "decimal.js";
 var computeIndexPrice = (prices, weights, weightedExponent) => {
-  let basePrice = new import_decimal2.default(0);
+  let basePrice = new Decimal2(0);
   for (const token in prices) {
     const price = prices[token];
-    const weight = weights[token] ?? new import_decimal2.default(0);
+    const weight = weights[token] ?? new Decimal2(0);
     basePrice = basePrice.add(price.mul(weight));
   }
   return basePrice.mul(weightedExponent);
 };
 var computeIndexPriceWithLogReturnWeightedExponent = (prices, prevPrices, weights, weightedExponent) => {
-  let weightedReturn = new import_decimal2.default(0);
-  let basePrice = new import_decimal2.default(0);
+  let weightedReturn = new Decimal2(0);
+  let basePrice = new Decimal2(0);
   for (const token in prices) {
     const price = prices[token];
     const prevPrice = prevPrices[token] ?? price;
-    const weight = weights[token] ?? new import_decimal2.default(0);
+    const weight = weights[token] ?? new Decimal2(0);
     const logReturn = computeLogReturn(price, prevPrice);
     weightedReturn = weightedReturn.add(logReturn.mul(weight));
     basePrice = basePrice.add(price.mul(weight));
   }
   return basePrice.mul(weightedReturn.add(1)).mul(weightedExponent);
 };
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+export {
   ExponentService,
   VoteSource,
   VotedAB,
   computeIndexPrice,
   computeIndexPriceWithLogReturnWeightedExponent,
   computeLogReturn
-});
+};
+//# sourceMappingURL=index.js.map
