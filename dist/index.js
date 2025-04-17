@@ -839,6 +839,7 @@ var EXPONENT_HALF_DECIMALS = EXPONENT_DECIMALS / 2;
 var INITIAL_EXPONENT = parseUnits("100000", EXPONENT_DECIMALS);
 var INITIAL_EXPONENT_WC = parseUnits("10", EXPONENT_HALF_DECIMALS);
 var INITIAL_EXPONENT_WT = parseUnits("10", EXPONENT_HALF_DECIMALS);
+var INITIAL_INDEX_PRICE = "0.01";
 
 // src/types/types.ts
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
@@ -947,7 +948,7 @@ var computeIndexPrice = (prices, weights, weightedExponent) => {
   }
   return basePrice.mul(weightedExponent);
 };
-function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal2(0.01)) {
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal2(INITIAL_INDEX_PRICE)) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
     return new Decimal2(1);
@@ -962,8 +963,8 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
     return new Decimal2(1);
   }
-  const rA = Decimal2.ln(aaPrice.div(aaPrevPrice));
-  const rB = Decimal2.ln(bbPrice.div(bbPrevPrice));
+  const rA = computeLogReturn(aaPrice, aaPrevPrice);
+  const rB = computeLogReturn(bbPrice, bbPrevPrice);
   const totalWeight = aaWeight.add(bbWeight);
   if (totalWeight.eq(0))
     return new Decimal2(1);

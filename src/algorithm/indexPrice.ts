@@ -2,6 +2,7 @@
 import Decimal from "decimal.js";
 import { computeLogReturn } from "./math";
 import { TokenPriceMap, TokenWeightMap } from "../types/types";
+import { INITIAL_INDEX_PRICE } from "../constants/constants";
 
 /**
  * Calculate the index price of a multi-token portfolio, weighted base price × exponent
@@ -31,7 +32,7 @@ export function computeBiasAdjustedIndexPrice(
   prevPrices: TokenPriceMap,
   weights: TokenWeightMap,
   exponentPrice: Decimal,
-  prevIndexPrice: Decimal = new Decimal(0.01)
+  prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE)
 ): Decimal {
   const symbols = Object.keys(prices);
   if (symbols.length < 2) return new Decimal(1);
@@ -58,8 +59,8 @@ export function computeBiasAdjustedIndexPrice(
   }
 
   // Step 1: Calculate log return
-  const rA = Decimal.ln(aaPrice.div(aaPrevPrice));
-  const rB = Decimal.ln(bbPrice.div(bbPrevPrice));
+  const rA = computeLogReturn(aaPrice, aaPrevPrice);
+  const rB = computeLogReturn(bbPrice, bbPrevPrice);
 
   // Step 2: Weighted combination (AA forward, BB reverse)
   const totalWeight = aaWeight.add(bbWeight);

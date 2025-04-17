@@ -1,10 +1,15 @@
 import Decimal from 'decimal.js';
 
 /**
- * Calculate the logarithmic rate of return between two prices (log return)
- * @param current Current Price
- * @param previous Previous Price
- * @returns Logarithmic yield (ln(current / previous))
+ * Computes the log return (Logarithmic Return)
+ *
+ * Formula:
+ *    r = ln(P_t / P_{t-1})
+ *
+ * Description:
+ *    - P_t: current price
+ *    - P_{t-1}: previous price
+ *    - Returns 0 if either price is non-positive
  */
 declare const computeLogReturn: (current: Decimal, previous: Decimal) => Decimal;
 
