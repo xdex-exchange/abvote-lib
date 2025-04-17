@@ -35,10 +35,10 @@ var computeLogReturn = (current, previous) => {
   return current.div(previous).log();
 };
 
-// node_modules/ethers/lib.esm/_version.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
 
-// node_modules/ethers/lib.esm/utils/properties.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/properties.js
 function checkType(value, type, name) {
   const types = type.split("|").map((t) => t.trim());
   for (let i = 0; i < types.length; i++) {
@@ -71,7 +71,7 @@ function defineProperties(target, values, types) {
   }
 }
 
-// node_modules/ethers/lib.esm/utils/errors.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/errors.js
 function stringify(value) {
   if (value == null) {
     return "null";
@@ -194,7 +194,7 @@ function assertPrivate(givenGuard, guard, className) {
   }
 }
 
-// node_modules/ethers/lib.esm/utils/data.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/data.js
 function _getBytes(value, name, copy) {
   if (value instanceof Uint8Array) {
     if (copy) {
@@ -217,7 +217,7 @@ function getBytes(value, name) {
   return _getBytes(value, name, false);
 }
 
-// node_modules/ethers/lib.esm/utils/maths.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/maths.js
 var BN_0 = BigInt(0);
 var BN_1 = BigInt(1);
 var maxValue = 9007199254740991;
@@ -306,7 +306,7 @@ function getNumber(value, name) {
   assertArgument(false, "invalid numeric value", name || "value", value);
 }
 
-// node_modules/ethers/lib.esm/utils/fixednumber.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/fixednumber.js
 var BN_N1 = BigInt(-1);
 var BN_02 = BigInt(0);
 var BN_12 = BigInt(1);
@@ -810,7 +810,7 @@ div_fn = function(o, safeOp) {
 };
 var FixedNumber = _FixedNumber;
 
-// node_modules/ethers/lib.esm/utils/units.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/units.js
 var names = [
   "wei",
   "kwei",
@@ -947,25 +947,38 @@ var computeIndexPrice = (prices, weights, weightedExponent) => {
   }
   return basePrice.mul(weightedExponent);
 };
-var computeIndexPriceWithLogReturnWeightedExponent = (prices, prevPrices, weights, weightedExponent) => {
-  let weightedReturn = new Decimal2(0);
-  let basePrice = new Decimal2(0);
-  for (const token in prices) {
-    const price = prices[token];
-    const prevPrice = prevPrices[token] ?? price;
-    const weight = weights[token] ?? new Decimal2(0);
-    const logReturn = computeLogReturn(price, prevPrice);
-    weightedReturn = weightedReturn.add(logReturn.mul(weight));
-    basePrice = basePrice.add(price.mul(weight));
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal2(0.01)) {
+  const symbols = Object.keys(prices);
+  if (symbols.length < 2)
+    return new Decimal2(1);
+  const aaSymbol = symbols[0];
+  const bbSymbol = symbols[1];
+  const aaPrice = prices[aaSymbol];
+  const aaPrevPrice = prevPrices[aaSymbol];
+  const bbPrice = prices[bbSymbol];
+  const bbPrevPrice = prevPrices[bbSymbol];
+  const aaWeight = weights[aaSymbol];
+  const bbWeight = weights[bbSymbol];
+  if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
+    return new Decimal2(1);
   }
-  return basePrice.mul(weightedReturn.add(1)).mul(weightedExponent);
-};
+  const rA = Decimal2.ln(aaPrice.div(aaPrevPrice));
+  const rB = Decimal2.ln(bbPrice.div(bbPrevPrice));
+  const totalWeight = aaWeight.add(bbWeight);
+  if (totalWeight.eq(0))
+    return new Decimal2(1);
+  const weightedDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
+  const adjustedDelta = weightedDelta.mul(exponentPrice);
+  const indexPriceMultiplier = Decimal2.exp(adjustedDelta);
+  const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
+  return nextIndexPrice;
+}
 export {
   ExponentService,
   VoteSource,
   VotedAB,
+  computeBiasAdjustedIndexPrice,
   computeIndexPrice,
-  computeIndexPriceWithLogReturnWeightedExponent,
   computeLogReturn
 };
 //# sourceMappingURL=index.js.map
