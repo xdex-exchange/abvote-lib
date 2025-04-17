@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+
+# Output
+# dist/
+build/
+
+# Logs
+*.log
+pnpm-debug.log*
+
+# Coverage reports
+coverage/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Env
+.env
+.env.*
+
+# VSCode
+.vscode/
+
+# Optional: IDE files
+.idea/

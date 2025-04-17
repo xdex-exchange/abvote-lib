@@ -1,0 +1,26 @@
+{
+  "name": "abvote-lib",
+  "version": "0.1.0",
+  "description": "A utility library for computing exponent-based token index pricing",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs",
+    "types": "./dist/index.d.ts"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "ethers": "^6.13.5",
+    "tsup": "^7.2.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "dependencies": {
+    "decimal.js": "^10.4.3"
+  }
+}

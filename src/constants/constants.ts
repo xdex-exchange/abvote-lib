@@ -1,0 +1,7 @@
+import { parseUnits } from "ethers";
+
+export const EXPONENT_DECIMALS = 18;
+export const EXPONENT_HALF_DECIMALS = EXPONENT_DECIMALS / 2;
+export const INITIAL_EXPONENT = parseUnits("100000", EXPONENT_DECIMALS);
+export const INITIAL_EXPONENT_WC = parseUnits("10", EXPONENT_HALF_DECIMALS);
+export const INITIAL_EXPONENT_WT = parseUnits("10", EXPONENT_HALF_DECIMALS);
