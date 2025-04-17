@@ -35,6 +35,14 @@ export class ExponentService {
     this.exponent = 0n;
   }
 
+  setState(a: bigint, b: bigint, wc: bigint, wt: bigint, exponent: bigint) {
+    this.a = a;
+    this.b = b;
+    this.wc = wc;
+    this.wt = wt;
+    this.exponent = exponent;
+  }
+
   computeExponent(
     voteAmount: number,
     voteSource: VoteSource,
@@ -83,5 +91,24 @@ export class ExponentService {
       wt: this.wt,
       exponent: this.exponent,
     };
+  }
+
+  serialize() {
+    return JSON.stringify({
+      a: this.a + "",
+      b: this.b + "",
+      wc: this.wc + "",
+      wt: this.wt + "",
+      exponent: this.exponent + "",
+    });
+  }
+
+  deserialize(json: string) {
+    const obj = JSON.parse(json);
+    this.a = BigInt(obj.a);
+    this.b = BigInt(obj.b);
+    this.wc = BigInt(obj.wc);
+    this.wt = BigInt(obj.wt);
+    this.exponent = BigInt(obj.exponent);
   }
 }

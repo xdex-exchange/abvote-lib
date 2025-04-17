@@ -35,6 +35,7 @@ declare class ExponentService {
     private exponent;
     constructor();
     defaultState(): void;
+    setState(a: bigint, b: bigint, wc: bigint, wt: bigint, exponent: bigint): void;
     computeExponent(voteAmount: number, voteSource: VoteSource, voteResult: VotedAB): {
         a: bigint;
         b: bigint;
@@ -48,6 +49,8 @@ declare class ExponentService {
         wt: bigint;
         exponent: bigint;
     };
+    serialize(): string;
+    deserialize(json: string): void;
 }
 
 /**

@@ -871,6 +871,13 @@ var ExponentService = class {
     this.wt = this.initialWT;
     this.exponent = 0n;
   }
+  setState(a, b, wc, wt, exponent) {
+    this.a = a;
+    this.b = b;
+    this.wc = wc;
+    this.wt = wt;
+    this.exponent = exponent;
+  }
   computeExponent(voteAmount, voteSource, voteResult) {
     const weight = this.computeVoteWeight(voteSource) * BigInt(voteAmount);
     this.a += weight;
@@ -909,6 +916,23 @@ var ExponentService = class {
       wt: this.wt,
       exponent: this.exponent
     };
+  }
+  serialize() {
+    return JSON.stringify({
+      a: this.a + "",
+      b: this.b + "",
+      wc: this.wc + "",
+      wt: this.wt + "",
+      exponent: this.exponent + ""
+    });
+  }
+  deserialize(json) {
+    const obj = JSON.parse(json);
+    this.a = BigInt(obj.a);
+    this.b = BigInt(obj.b);
+    this.wc = BigInt(obj.wc);
+    this.wt = BigInt(obj.wt);
+    this.exponent = BigInt(obj.exponent);
   }
 };
 
