@@ -2,7 +2,7 @@
   "name": "abvote-lib",
   "version": "0.1.0",
   "description": "A utility library for computing exponent-based token index pricing",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
