@@ -1,18 +1,16 @@
 // src/lib/indexPrice.ts
 import Decimal from "decimal.js";
 import { computeLogReturn } from "./math";
-import {
-  TokenPrevPriceMap,
-  TokenPriceMap,
-  TokenWeightMap,
-} from "../types/types";
+import { TokenPriceMap, TokenWeightMap } from "../types/types";
+import { INITIAL_INDEX_PRICE } from "../constants/constants";
+import { applyVolatilityNoise } from "./volatility";
 
 /**
  * Calculate the index price of a multi-token portfolio, weighted base price × exponent
  * @param prices Current price set, for example:{ BTC: 62000, ETH: 3200}
  * @param weights The weight of each currency, for example:{ BTC: 0.6, ETH: 0.4}
  * @param weightedExponent Weighted index impact factor, e.g., 1.02
- * @returns Composite weighted index price
+ * @returns Composite weighted index price.
  */
 export const computeIndexPrice = (
   prices: TokenPriceMap,
@@ -30,34 +28,68 @@ export const computeIndexPrice = (
   return basePrice.mul(weightedExponent);
 };
 
-/**
- * Calculate the index price of the multi-token portfolio, taking into account the log return, weight and exponent of the multi-currency price.
- *
- * @param prices Current price set, for example:{ BTC: 62000, ETH: 3200}
- * @param prevPrices The price set of the previous point in time (some currencies can be defaulted, and the default is equal to the current price)
- * @param weights The weight of each currency, for example:{ BTC: 0.6, ETH: 0.4}
- * @param weightedExponent Weighted index impact factor, e.g., 1.02
- *
- * @returns Composite weighted index price
- */
-export const computeIndexPriceWithLogReturnWeightedExponent = (
+type ComputeBiasAdjustedIndexPriceOptions = {
+  enableVolatility?: boolean;
+  volatilityAmplifier?: number;
+  noiseRange?: number;
+};
+
+export function computeBiasAdjustedIndexPrice(
   prices: TokenPriceMap,
-  prevPrices: TokenPrevPriceMap,
+  prevPrices: TokenPriceMap,
   weights: TokenWeightMap,
-  weightedExponent: Decimal
-): Decimal => {
-  let weightedReturn = new Decimal(0);
-  let basePrice = new Decimal(0);
+  exponentPrice: Decimal,
+  prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
+  options?: ComputeBiasAdjustedIndexPriceOptions
+): Decimal {
+  const symbols = Object.keys(prices);
+  if (symbols.length < 2) return new Decimal(1);
 
-  for (const token in prices) {
-    const price = prices[token];
-    const prevPrice = prevPrices[token] ?? price;
-    const weight = weights[token] ?? new Decimal(0);
+  const aaSymbol = symbols[0];
+  const bbSymbol = symbols[1];
 
-    const logReturn = computeLogReturn(price, prevPrice);
-    weightedReturn = weightedReturn.add(logReturn.mul(weight));
-    basePrice = basePrice.add(price.mul(weight));
+  const aaPrice = prices[aaSymbol];
+  const aaPrevPrice = prevPrices[aaSymbol];
+  const bbPrice = prices[bbSymbol];
+  const bbPrevPrice = prevPrices[bbSymbol];
+
+  const aaWeight = weights[aaSymbol];
+  const bbWeight = weights[bbSymbol];
+
+  // Check if it is valid
+  if (
+    aaPrice.lte(0) ||
+    aaPrevPrice.lte(0) ||
+    bbPrice.lte(0) ||
+    bbPrevPrice.lte(0)
+  ) {
+    return new Decimal(1);
   }
 
-  return basePrice.mul(weightedReturn.add(1)).mul(weightedExponent);
-};
+  // Step 1: Calculate log return
+  const rA = computeLogReturn(aaPrice, aaPrevPrice);
+  const rB = computeLogReturn(bbPrice, bbPrevPrice);
+
+  // Step 2: Weighted combination (AA forward, BB reverse)
+  const totalWeight = aaWeight.add(bbWeight);
+  if (totalWeight.eq(0)) return new Decimal(1);
+
+  const weightedDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
+
+  // Step 3: Apply exponent-based amplification (from voting bias)
+  let adjustedDelta = weightedDelta.mul(exponentPrice);
+
+  // Step 3.5: Optional - Apply synthetic volatility for stimulation
+  if (options?.enableVolatility) {
+    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange,
+    });
+  }
+
+  // Step 4: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
+  const indexPriceMultiplier = Decimal.exp(adjustedDelta);
+  const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
+
+  return nextIndexPrice;
+}
