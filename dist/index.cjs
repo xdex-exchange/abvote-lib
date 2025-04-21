@@ -62,7 +62,10 @@ __export(src_exports, {
   VotedAB: () => VotedAB,
   computeIndexPrice: () => computeIndexPrice,
   computeIndexPriceWithLogReturnWeightedExponent: () => computeIndexPriceWithLogReturnWeightedExponent,
-  computeLogReturn: () => computeLogReturn
+  computeLogReturn: () => computeLogReturn,
+  getPriceAtomicResolution: () => getPriceAtomicResolution,
+  getPriceDecimals: () => getPriceDecimals,
+  getPriceExponent: () => getPriceExponent
 });
 module.exports = __toCommonJS(src_exports);
 
@@ -999,6 +1002,48 @@ var computeIndexPriceWithLogReturnWeightedExponent = (prices, prevPrices, weight
   }
   return basePrice.mul(weightedReturn.add(1)).mul(weightedExponent);
 };
+
+// src/algorithm/oracle.ts
+var getPriceDecimals = (price) => {
+  if (!price) {
+    return 0;
+  }
+  const p = price.split(".");
+  if (p.length < 2) {
+    return 0;
+  }
+  return p[1].length;
+};
+var getPriceExponent = (price) => {
+  if (!price) {
+    return NaN;
+  }
+  const p = price.split(".");
+  const a = Number(p[0]);
+  if (a > 0) {
+    return -p[0].length;
+  } else if (p.length < 2) {
+    return NaN;
+  } else {
+    const x = p[1].lastIndexOf("0") + 2;
+    return -9 - x;
+  }
+};
+var getPriceAtomicResolution = (price) => {
+  if (!price) {
+    return NaN;
+  }
+  const p = price.split(".");
+  const a = Number(p[0]);
+  if (a > 0) {
+    return -(5 + p[0].length);
+  } else if (p.length < 2) {
+    return NaN;
+  } else {
+    const x = p[1].lastIndexOf("0") + 2;
+    return x - 6;
+  }
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   ExponentService,
@@ -1006,6 +1051,9 @@ var computeIndexPriceWithLogReturnWeightedExponent = (prices, prevPrices, weight
   VotedAB,
   computeIndexPrice,
   computeIndexPriceWithLogReturnWeightedExponent,
-  computeLogReturn
+  computeLogReturn,
+  getPriceAtomicResolution,
+  getPriceDecimals,
+  getPriceExponent
 });
 //# sourceMappingURL=index.cjs.map

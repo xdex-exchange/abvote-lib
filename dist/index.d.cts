@@ -73,4 +73,8 @@ declare const computeIndexPrice: (prices: TokenPriceMap, weights: TokenWeightMap
  */
 declare const computeIndexPriceWithLogReturnWeightedExponent: (prices: TokenPriceMap, prevPrices: TokenPrevPriceMap, weights: TokenWeightMap, weightedExponent: Decimal) => Decimal;
 
-export { ExponentService, TokenPrevPriceMap, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeIndexPrice, computeIndexPriceWithLogReturnWeightedExponent, computeLogReturn };
+declare const getPriceDecimals: (price: string) => number;
+declare const getPriceExponent: (price: string) => number;
+declare const getPriceAtomicResolution: (price: string) => number;
+
+export { ExponentService, TokenPrevPriceMap, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeIndexPrice, computeIndexPriceWithLogReturnWeightedExponent, computeLogReturn, getPriceAtomicResolution, getPriceDecimals, getPriceExponent };

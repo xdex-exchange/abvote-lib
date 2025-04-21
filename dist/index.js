@@ -960,12 +960,57 @@ var computeIndexPriceWithLogReturnWeightedExponent = (prices, prevPrices, weight
   }
   return basePrice.mul(weightedReturn.add(1)).mul(weightedExponent);
 };
+
+// src/algorithm/oracle.ts
+var getPriceDecimals = (price) => {
+  if (!price) {
+    return 0;
+  }
+  const p = price.split(".");
+  if (p.length < 2) {
+    return 0;
+  }
+  return p[1].length;
+};
+var getPriceExponent = (price) => {
+  if (!price) {
+    return NaN;
+  }
+  const p = price.split(".");
+  const a = Number(p[0]);
+  if (a > 0) {
+    return -p[0].length;
+  } else if (p.length < 2) {
+    return NaN;
+  } else {
+    const x = p[1].lastIndexOf("0") + 2;
+    return -9 - x;
+  }
+};
+var getPriceAtomicResolution = (price) => {
+  if (!price) {
+    return NaN;
+  }
+  const p = price.split(".");
+  const a = Number(p[0]);
+  if (a > 0) {
+    return -(5 + p[0].length);
+  } else if (p.length < 2) {
+    return NaN;
+  } else {
+    const x = p[1].lastIndexOf("0") + 2;
+    return x - 6;
+  }
+};
 export {
   ExponentService,
   VoteSource,
   VotedAB,
   computeIndexPrice,
   computeIndexPriceWithLogReturnWeightedExponent,
-  computeLogReturn
+  computeLogReturn,
+  getPriceAtomicResolution,
+  getPriceDecimals,
+  getPriceExponent
 };
 //# sourceMappingURL=index.js.map
