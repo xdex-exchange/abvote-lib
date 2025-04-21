@@ -83,10 +83,10 @@ var computeLogReturn = (current, previous) => {
   return current.div(previous).log();
 };
 
-// node_modules/ethers/lib.esm/_version.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
 
-// node_modules/ethers/lib.esm/utils/properties.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/properties.js
 function checkType(value, type, name) {
   const types = type.split("|").map((t) => t.trim());
   for (let i = 0; i < types.length; i++) {
@@ -119,7 +119,7 @@ function defineProperties(target, values, types) {
   }
 }
 
-// node_modules/ethers/lib.esm/utils/errors.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/errors.js
 function stringify(value) {
   if (value == null) {
     return "null";
@@ -242,7 +242,7 @@ function assertPrivate(givenGuard, guard, className) {
   }
 }
 
-// node_modules/ethers/lib.esm/utils/data.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/data.js
 function _getBytes(value, name, copy) {
   if (value instanceof Uint8Array) {
     if (copy) {
@@ -265,7 +265,7 @@ function getBytes(value, name) {
   return _getBytes(value, name, false);
 }
 
-// node_modules/ethers/lib.esm/utils/maths.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/maths.js
 var BN_0 = BigInt(0);
 var BN_1 = BigInt(1);
 var maxValue = 9007199254740991;
@@ -354,7 +354,7 @@ function getNumber(value, name) {
   assertArgument(false, "invalid numeric value", name || "value", value);
 }
 
-// node_modules/ethers/lib.esm/utils/fixednumber.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/fixednumber.js
 var BN_N1 = BigInt(-1);
 var BN_02 = BigInt(0);
 var BN_12 = BigInt(1);
@@ -858,7 +858,7 @@ div_fn = function(o, safeOp) {
 };
 var FixedNumber = _FixedNumber;
 
-// node_modules/ethers/lib.esm/utils/units.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/units.js
 var names = [
   "wei",
   "kwei",
@@ -991,8 +991,8 @@ var import_decimal3 = __toESM(require("decimal.js"), 1);
 // src/algorithm/volatility.ts
 var import_decimal2 = __toESM(require("decimal.js"), 1);
 function applyVolatilityNoise(delta, options) {
-  const amplifier = new import_decimal2.default(options?.volatilityAmplifier ?? 1.2);
-  const noiseRange = options?.noiseRange ?? 2e-3;
+  const amplifier = new import_decimal2.default(options?.volatilityAmplifier ?? 1.6);
+  const noiseRange = options?.noiseRange ?? 0.2;
   const amplified = delta.mul(import_decimal2.default.pow(delta.abs().add(1), amplifier));
   const noise = new import_decimal2.default(Math.random() * noiseRange - noiseRange / 2);
   return amplified.add(noise);
