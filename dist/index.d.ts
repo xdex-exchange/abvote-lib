@@ -65,6 +65,18 @@ declare class ExponentService {
  * @returns Composite weighted index price.
  */
 declare const computeIndexPrice: (prices: TokenPriceMap, weights: TokenWeightMap, weightedExponent: Decimal) => Decimal;
-declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal): Decimal;
+type ComputeBiasAdjustedIndexPriceOptions = {
+    enableVolatility?: boolean;
+    volatilityAmplifier?: number;
+    noiseRange?: number;
+};
+declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): Decimal;
 
-export { ExponentService, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeIndexPrice, computeLogReturn };
+declare const EXPONENT_DECIMALS = 18;
+declare const EXPONENT_HALF_DECIMALS: number;
+declare const INITIAL_EXPONENT: bigint;
+declare const INITIAL_EXPONENT_WC: bigint;
+declare const INITIAL_EXPONENT_WT: bigint;
+declare const INITIAL_INDEX_PRICE = "0.01";
+
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeIndexPrice, computeLogReturn };

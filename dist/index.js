@@ -938,20 +938,32 @@ var ExponentService = class {
 };
 
 // src/algorithm/indexPrice.ts
+import Decimal3 from "decimal.js";
+
+// src/algorithm/volatility.ts
 import Decimal2 from "decimal.js";
+function applyVolatilityNoise(delta, options) {
+  const amplifier = new Decimal2(options?.volatilityAmplifier ?? 1.2);
+  const noiseRange = options?.noiseRange ?? 2e-3;
+  const amplified = delta.mul(Decimal2.pow(delta.abs().add(1), amplifier));
+  const noise = new Decimal2(Math.random() * noiseRange - noiseRange / 2);
+  return amplified.add(noise);
+}
+
+// src/algorithm/indexPrice.ts
 var computeIndexPrice = (prices, weights, weightedExponent) => {
-  let basePrice = new Decimal2(0);
+  let basePrice = new Decimal3(0);
   for (const token in prices) {
     const price = prices[token];
-    const weight = weights[token] ?? new Decimal2(0);
+    const weight = weights[token] ?? new Decimal3(0);
     basePrice = basePrice.add(price.mul(weight));
   }
   return basePrice.mul(weightedExponent);
 };
-function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal2(INITIAL_INDEX_PRICE)) {
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal3(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
-    return new Decimal2(1);
+    return new Decimal3(1);
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
   const aaPrice = prices[aaSymbol];
@@ -961,21 +973,33 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const aaWeight = weights[aaSymbol];
   const bbWeight = weights[bbSymbol];
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
-    return new Decimal2(1);
+    return new Decimal3(1);
   }
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
   const rB = computeLogReturn(bbPrice, bbPrevPrice);
   const totalWeight = aaWeight.add(bbWeight);
   if (totalWeight.eq(0))
-    return new Decimal2(1);
+    return new Decimal3(1);
   const weightedDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
-  const adjustedDelta = weightedDelta.mul(exponentPrice);
-  const indexPriceMultiplier = Decimal2.exp(adjustedDelta);
+  let adjustedDelta = weightedDelta.mul(exponentPrice);
+  if (options?.enableVolatility) {
+    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange
+    });
+  }
+  const indexPriceMultiplier = Decimal3.exp(adjustedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return nextIndexPrice;
 }
 export {
+  EXPONENT_DECIMALS,
+  EXPONENT_HALF_DECIMALS,
   ExponentService,
+  INITIAL_EXPONENT,
+  INITIAL_EXPONENT_WC,
+  INITIAL_EXPONENT_WT,
+  INITIAL_INDEX_PRICE,
   VoteSource,
   VotedAB,
   computeBiasAdjustedIndexPrice,

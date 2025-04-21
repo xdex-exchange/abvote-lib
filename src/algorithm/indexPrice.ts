@@ -3,6 +3,7 @@ import Decimal from "decimal.js";
 import { computeLogReturn } from "./math";
 import { TokenPriceMap, TokenWeightMap } from "../types/types";
 import { INITIAL_INDEX_PRICE } from "../constants/constants";
+import { applyVolatilityNoise } from "./volatility";
 
 /**
  * Calculate the index price of a multi-token portfolio, weighted base price × exponent
@@ -27,12 +28,19 @@ export const computeIndexPrice = (
   return basePrice.mul(weightedExponent);
 };
 
+type ComputeBiasAdjustedIndexPriceOptions = {
+  enableVolatility?: boolean;
+  volatilityAmplifier?: number;
+  noiseRange?: number;
+};
+
 export function computeBiasAdjustedIndexPrice(
   prices: TokenPriceMap,
   prevPrices: TokenPriceMap,
   weights: TokenWeightMap,
   exponentPrice: Decimal,
-  prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE)
+  prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
+  options?: ComputeBiasAdjustedIndexPriceOptions
 ): Decimal {
   const symbols = Object.keys(prices);
   if (symbols.length < 2) return new Decimal(1);
@@ -68,8 +76,16 @@ export function computeBiasAdjustedIndexPrice(
 
   const weightedDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
 
-  // Step 3: Apply exponentPrice zoom in/out changes
-  const adjustedDelta = weightedDelta.mul(exponentPrice);
+  // Step 3: Apply exponent-based amplification (from voting bias)
+  let adjustedDelta = weightedDelta.mul(exponentPrice);
+
+  // Step 3.5: Optional - Apply synthetic volatility for stimulation
+  if (options?.enableVolatility) {
+    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange,
+    });
+  }
 
   // Step 4: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
   const indexPriceMultiplier = Decimal.exp(adjustedDelta);
