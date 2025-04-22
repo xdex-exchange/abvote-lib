@@ -67,7 +67,6 @@ __export(src_exports, {
   VoteSource: () => VoteSource,
   VotedAB: () => VotedAB,
   computeBiasAdjustedIndexPrice: () => computeBiasAdjustedIndexPrice,
-  computeIndexPrice: () => computeIndexPrice,
   computeLogReturn: () => computeLogReturn,
   getPriceAtomicResolution: () => getPriceAtomicResolution,
   getPriceDecimals: () => getPriceDecimals,
@@ -991,23 +990,14 @@ var import_decimal3 = __toESM(require("decimal.js"), 1);
 // src/algorithm/volatility.ts
 var import_decimal2 = __toESM(require("decimal.js"), 1);
 function applyVolatilityNoise(delta, options) {
-  const amplifier = new import_decimal2.default(options?.volatilityAmplifier ?? 1.6);
-  const noiseRange = options?.noiseRange ?? 0.02;
+  const amplifier = new import_decimal2.default(options?.volatilityAmplifier ?? 1.2);
+  const noiseRange = options?.noiseRange ?? 0.1;
   const amplified = delta.mul(import_decimal2.default.pow(delta.abs().add(1), amplifier));
   const noise = new import_decimal2.default(Math.random() * noiseRange - noiseRange / 2);
   return amplified.add(noise);
 }
 
 // src/algorithm/indexPrice.ts
-var computeIndexPrice = (prices, weights, weightedExponent) => {
-  let basePrice = new import_decimal3.default(0);
-  for (const token in prices) {
-    const price = prices[token];
-    const weight = weights[token] ?? new import_decimal3.default(0);
-    basePrice = basePrice.add(price.mul(weight));
-  }
-  return basePrice.mul(weightedExponent);
-};
 function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal3.default(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
@@ -1094,7 +1084,6 @@ var getPriceAtomicResolution = (price) => {
   VoteSource,
   VotedAB,
   computeBiasAdjustedIndexPrice,
-  computeIndexPrice,
   computeLogReturn,
   getPriceAtomicResolution,
   getPriceDecimals,

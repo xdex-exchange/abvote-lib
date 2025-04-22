@@ -943,23 +943,14 @@ import Decimal3 from "decimal.js";
 // src/algorithm/volatility.ts
 import Decimal2 from "decimal.js";
 function applyVolatilityNoise(delta, options) {
-  const amplifier = new Decimal2(options?.volatilityAmplifier ?? 1.6);
-  const noiseRange = options?.noiseRange ?? 0.02;
+  const amplifier = new Decimal2(options?.volatilityAmplifier ?? 1.2);
+  const noiseRange = options?.noiseRange ?? 0.1;
   const amplified = delta.mul(Decimal2.pow(delta.abs().add(1), amplifier));
   const noise = new Decimal2(Math.random() * noiseRange - noiseRange / 2);
   return amplified.add(noise);
 }
 
 // src/algorithm/indexPrice.ts
-var computeIndexPrice = (prices, weights, weightedExponent) => {
-  let basePrice = new Decimal3(0);
-  for (const token in prices) {
-    const price = prices[token];
-    const weight = weights[token] ?? new Decimal3(0);
-    basePrice = basePrice.add(price.mul(weight));
-  }
-  return basePrice.mul(weightedExponent);
-};
 function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal3(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
@@ -1045,7 +1036,6 @@ export {
   VoteSource,
   VotedAB,
   computeBiasAdjustedIndexPrice,
-  computeIndexPrice,
   computeLogReturn,
   getPriceAtomicResolution,
   getPriceDecimals,

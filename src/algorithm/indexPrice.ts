@@ -5,29 +5,6 @@ import { TokenPriceMap, TokenWeightMap } from "../types/types";
 import { INITIAL_INDEX_PRICE } from "../constants/constants";
 import { applyVolatilityNoise } from "./volatility";
 
-/**
- * Calculate the index price of a multi-token portfolio, weighted base price × exponent
- * @param prices Current price set, for example:{ BTC: 62000, ETH: 3200}
- * @param weights The weight of each currency, for example:{ BTC: 0.6, ETH: 0.4}
- * @param weightedExponent Weighted index impact factor, e.g., 1.02
- * @returns Composite weighted index price.
- */
-export const computeIndexPrice = (
-  prices: TokenPriceMap,
-  weights: TokenWeightMap,
-  weightedExponent: Decimal
-): Decimal => {
-  let basePrice = new Decimal(0);
-
-  for (const token in prices) {
-    const price = prices[token];
-    const weight = weights[token] ?? new Decimal(0);
-    basePrice = basePrice.add(price.mul(weight));
-  }
-
-  return basePrice.mul(weightedExponent);
-};
-
 type ComputeBiasAdjustedIndexPriceOptions = {
   enableVolatility?: boolean;
   volatilityAmplifier?: number;
