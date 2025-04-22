@@ -944,7 +944,7 @@ import Decimal3 from "decimal.js";
 import Decimal2 from "decimal.js";
 function applyVolatilityNoise(delta, options) {
   const amplifier = new Decimal2(options?.volatilityAmplifier ?? 1.6);
-  const noiseRange = options?.noiseRange ?? 0.2;
+  const noiseRange = options?.noiseRange ?? 0.02;
   const amplified = delta.mul(Decimal2.pow(delta.abs().add(1), amplifier));
   const noise = new Decimal2(Math.random() * noiseRange - noiseRange / 2);
   return amplified.add(noise);
