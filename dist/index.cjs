@@ -991,7 +991,7 @@ var import_decimal3 = __toESM(require("decimal.js"), 1);
 var import_decimal2 = __toESM(require("decimal.js"), 1);
 function applyVolatilityNoise(delta, options) {
   const amplifier = new import_decimal2.default(options?.volatilityAmplifier ?? 1.2);
-  const noiseRange = options?.noiseRange ?? 0.1;
+  const noiseRange = options?.noiseRange ?? 0.02;
   const amplified = delta.mul(import_decimal2.default.pow(delta.abs().add(1), amplifier));
   const noise = new import_decimal2.default(Math.random() * noiseRange - noiseRange / 2);
   return amplified.add(noise);
