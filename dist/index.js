@@ -955,6 +955,9 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
     return new Decimal3(INITIAL_INDEX_PRICE);
+  const prevSymbols = Object.keys(prevPrices);
+  if (prevSymbols.length < 2)
+    return new Decimal3(INITIAL_INDEX_PRICE);
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
   const aaPrice = prices[aaSymbol];
