@@ -20,7 +20,7 @@ export function computeBiasAdjustedIndexPrice(
   options?: ComputeBiasAdjustedIndexPriceOptions
 ): Decimal {
   const symbols = Object.keys(prices);
-  if (symbols.length < 2) return new Decimal(1);
+  if (symbols.length < 2) return new Decimal(INITIAL_INDEX_PRICE);
 
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
@@ -40,7 +40,7 @@ export function computeBiasAdjustedIndexPrice(
     bbPrice.lte(0) ||
     bbPrevPrice.lte(0)
   ) {
-    return new Decimal(1);
+    return new Decimal(INITIAL_INDEX_PRICE);
   }
 
   // Step 1: Calculate log return
