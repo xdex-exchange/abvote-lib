@@ -28,9 +28,9 @@ export function computeBiasAdjustedIndexPrice(
   options?: ComputeBiasAdjustedIndexPriceOptions
 ): Decimal {
   const symbols = Object.keys(prices);
-  if (symbols.length < 2) return new Decimal(INITIAL_INDEX_PRICE);
+  if (symbols.length < 2) return new Decimal(0);
   const prevSymbols = Object.keys(prevPrices);
-  if (prevSymbols.length < 2) return new Decimal(INITIAL_INDEX_PRICE);
+  if (prevSymbols.length < 2) return new Decimal(0);
 
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
@@ -50,7 +50,7 @@ export function computeBiasAdjustedIndexPrice(
     bbPrice.lte(0) ||
     bbPrevPrice.lte(0)
   ) {
-    return new Decimal(INITIAL_INDEX_PRICE);
+    return new Decimal(0);
   }
 
   // Step 1: Calculate log return
@@ -59,7 +59,7 @@ export function computeBiasAdjustedIndexPrice(
 
   // Step 2: Weighted combination (AA forward, BB reverse)
   const totalWeight = aaWeight.add(bbWeight);
-  if (totalWeight.eq(0)) return new Decimal(INITIAL_INDEX_PRICE);
+  if (totalWeight.eq(0)) return new Decimal(0);
 
   // Step 3: Weighted price return (token impact)
   const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);

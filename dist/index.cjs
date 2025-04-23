@@ -1012,10 +1012,10 @@ function applyVolatilityNoise(delta, options) {
 function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal4.default(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
-    return new import_decimal4.default(INITIAL_INDEX_PRICE);
+    return new import_decimal4.default(0);
   const prevSymbols = Object.keys(prevPrices);
   if (prevSymbols.length < 2)
-    return new import_decimal4.default(INITIAL_INDEX_PRICE);
+    return new import_decimal4.default(0);
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
   const aaPrice = prices[aaSymbol];
@@ -1025,13 +1025,13 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const aaWeight = weights[aaSymbol];
   const bbWeight = weights[bbSymbol];
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
-    return new import_decimal4.default(INITIAL_INDEX_PRICE);
+    return new import_decimal4.default(0);
   }
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
   const rB = computeLogReturn(bbPrice, bbPrevPrice);
   const totalWeight = aaWeight.add(bbWeight);
   if (totalWeight.eq(0))
-    return new import_decimal4.default(INITIAL_INDEX_PRICE);
+    return new import_decimal4.default(0);
   const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
   const cappedTokenDelta = tanhClampDelta(
     tokenDelta,
