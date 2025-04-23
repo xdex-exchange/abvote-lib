@@ -77,9 +77,17 @@ type ComputeBiasAdjustedIndexPriceOptions = {
 };
 declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): Decimal;
 
-declare const getPriceDecimals: (price: string) => number;
-declare const getPriceExponent: (price: string) => number;
-declare const getPriceAtomicResolution: (price: string) => number;
+declare const getPriceAtomicResolution: (price: number) => number;
+declare const generateEventHash: (eventTag: string, title: string) => string;
+declare const getMarketParameters: (ticker: string, price: string) => {
+    ticker: string;
+    priceExponent: number;
+    minPriceChange: number;
+    atomicResolution: number;
+    quantumConversionExponent: number;
+    stepBaseQuantums: number;
+    subticksPerTick: number;
+};
 
 declare const EXPONENT_DECIMALS = 18;
 declare const EXPONENT_HALF_DECIMALS: number;
@@ -87,5 +95,7 @@ declare const INITIAL_EXPONENT: bigint;
 declare const INITIAL_EXPONENT_WC: bigint;
 declare const INITIAL_EXPONENT_WT: bigint;
 declare const INITIAL_INDEX_PRICE = "0.01";
+declare const ORACLE_PRICE_DECIMAL = 7;
+declare const MIN_PRICE_CHANGE_PPM = 4000;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeLogReturn, getPriceAtomicResolution, getPriceDecimals, getPriceExponent, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_PRICE_CHANGE_PPM, ORACLE_PRICE_DECIMAL, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeLogReturn, generateEventHash, getMarketParameters, getPriceAtomicResolution, tanhClampDelta };

@@ -64,13 +64,15 @@ __export(src_exports, {
   INITIAL_EXPONENT_WC: () => INITIAL_EXPONENT_WC,
   INITIAL_EXPONENT_WT: () => INITIAL_EXPONENT_WT,
   INITIAL_INDEX_PRICE: () => INITIAL_INDEX_PRICE,
+  MIN_PRICE_CHANGE_PPM: () => MIN_PRICE_CHANGE_PPM,
+  ORACLE_PRICE_DECIMAL: () => ORACLE_PRICE_DECIMAL,
   VoteSource: () => VoteSource,
   VotedAB: () => VotedAB,
   computeBiasAdjustedIndexPrice: () => computeBiasAdjustedIndexPrice,
   computeLogReturn: () => computeLogReturn,
+  generateEventHash: () => generateEventHash,
+  getMarketParameters: () => getMarketParameters,
   getPriceAtomicResolution: () => getPriceAtomicResolution,
-  getPriceDecimals: () => getPriceDecimals,
-  getPriceExponent: () => getPriceExponent,
   tanhClampDelta: () => tanhClampDelta
 });
 module.exports = __toCommonJS(src_exports);
@@ -87,10 +89,10 @@ function tanhClampDelta(delta, maxPercent) {
   return import_decimal.default.tanh(delta.div(maxDelta)).mul(maxDelta);
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
+// node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/properties.js
+// node_modules/ethers/lib.esm/utils/properties.js
 function checkType(value, type, name) {
   const types = type.split("|").map((t) => t.trim());
   for (let i = 0; i < types.length; i++) {
@@ -123,7 +125,7 @@ function defineProperties(target, values, types) {
   }
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/errors.js
+// node_modules/ethers/lib.esm/utils/errors.js
 function stringify(value) {
   if (value == null) {
     return "null";
@@ -230,6 +232,12 @@ var _normalizeForms = ["NFD", "NFC", "NFKD", "NFKC"].reduce((accum, form) => {
   }
   return accum;
 }, []);
+function assertNormalize(form) {
+  assert(_normalizeForms.indexOf(form) >= 0, "platform missing String.prototype.normalize", "UNSUPPORTED_OPERATION", {
+    operation: "String.prototype.normalize",
+    info: { form }
+  });
+}
 function assertPrivate(givenGuard, guard, className) {
   if (className == null) {
     className = "";
@@ -246,7 +254,7 @@ function assertPrivate(givenGuard, guard, className) {
   }
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/data.js
+// node_modules/ethers/lib.esm/utils/data.js
 function _getBytes(value, name, copy) {
   if (value instanceof Uint8Array) {
     if (copy) {
@@ -268,8 +276,61 @@ function _getBytes(value, name, copy) {
 function getBytes(value, name) {
   return _getBytes(value, name, false);
 }
+function isHexString(value, length) {
+  if (typeof value !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
+    return false;
+  }
+  if (typeof length === "number" && value.length !== 2 + 2 * length) {
+    return false;
+  }
+  if (length === true && value.length % 2 !== 0) {
+    return false;
+  }
+  return true;
+}
+var HexCharacters = "0123456789abcdef";
+function hexlify(data) {
+  const bytes2 = getBytes(data);
+  let result = "0x";
+  for (let i = 0; i < bytes2.length; i++) {
+    const v = bytes2[i];
+    result += HexCharacters[(v & 240) >> 4] + HexCharacters[v & 15];
+  }
+  return result;
+}
+function concat(datas) {
+  return "0x" + datas.map((d) => hexlify(d).substring(2)).join("");
+}
+function dataLength(data) {
+  if (isHexString(data, true)) {
+    return (data.length - 2) / 2;
+  }
+  return getBytes(data).length;
+}
+function zeroPad(data, length, left) {
+  const bytes2 = getBytes(data);
+  assert(length >= bytes2.length, "padding exceeds data length", "BUFFER_OVERRUN", {
+    buffer: new Uint8Array(bytes2),
+    length,
+    offset: length + 1
+  });
+  const result = new Uint8Array(length);
+  result.fill(0);
+  if (left) {
+    result.set(bytes2, length - bytes2.length);
+  } else {
+    result.set(bytes2, 0);
+  }
+  return hexlify(result);
+}
+function zeroPadValue(data, length) {
+  return zeroPad(data, length, true);
+}
+function zeroPadBytes(data, length) {
+  return zeroPad(data, length, false);
+}
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/maths.js
+// node_modules/ethers/lib.esm/utils/maths.js
 var BN_0 = BigInt(0);
 var BN_1 = BigInt(1);
 var maxValue = 9007199254740991;
@@ -284,6 +345,28 @@ function fromTwos(_value, _width) {
   if (value >> width - BN_1) {
     const mask2 = (BN_1 << width) - BN_1;
     return -((~value & mask2) + BN_1);
+  }
+  return value;
+}
+function toTwos(_value, _width) {
+  let value = getBigInt(_value, "value");
+  const width = BigInt(getNumber(_width, "width"));
+  const limit = BN_1 << width - BN_1;
+  if (value < BN_0) {
+    value = -value;
+    assert(value <= limit, "too low", "NUMERIC_FAULT", {
+      operation: "toTwos",
+      fault: "overflow",
+      value: _value
+    });
+    const mask2 = (BN_1 << width) - BN_1;
+    return (~value & mask2) + BN_1;
+  } else {
+    assert(value < limit, "too high", "NUMERIC_FAULT", {
+      operation: "toTwos",
+      fault: "overflow",
+      value: _value
+    });
   }
   return value;
 }
@@ -357,8 +440,90 @@ function getNumber(value, name) {
   }
   assertArgument(false, "invalid numeric value", name || "value", value);
 }
+function toBeArray(_value) {
+  const value = getUint(_value, "value");
+  if (value === BN_0) {
+    return new Uint8Array([]);
+  }
+  let hex = value.toString(16);
+  if (hex.length % 2) {
+    hex = "0" + hex;
+  }
+  const result = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < result.length; i++) {
+    const offset = i * 2;
+    result[i] = parseInt(hex.substring(offset, offset + 2), 16);
+  }
+  return result;
+}
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/fixednumber.js
+// node_modules/ethers/lib.esm/utils/utf8.js
+function errorFunc(reason, offset, bytes2, output2, badCodepoint) {
+  assertArgument(false, `invalid codepoint at offset ${offset}; ${reason}`, "bytes", bytes2);
+}
+function ignoreFunc(reason, offset, bytes2, output2, badCodepoint) {
+  if (reason === "BAD_PREFIX" || reason === "UNEXPECTED_CONTINUE") {
+    let i = 0;
+    for (let o = offset + 1; o < bytes2.length; o++) {
+      if (bytes2[o] >> 6 !== 2) {
+        break;
+      }
+      i++;
+    }
+    return i;
+  }
+  if (reason === "OVERRUN") {
+    return bytes2.length - offset - 1;
+  }
+  return 0;
+}
+function replaceFunc(reason, offset, bytes2, output2, badCodepoint) {
+  if (reason === "OVERLONG") {
+    assertArgument(typeof badCodepoint === "number", "invalid bad code point for replacement", "badCodepoint", badCodepoint);
+    output2.push(badCodepoint);
+    return 0;
+  }
+  output2.push(65533);
+  return ignoreFunc(reason, offset, bytes2, output2, badCodepoint);
+}
+var Utf8ErrorFuncs = Object.freeze({
+  error: errorFunc,
+  ignore: ignoreFunc,
+  replace: replaceFunc
+});
+function toUtf8Bytes(str, form) {
+  assertArgument(typeof str === "string", "invalid string value", "str", str);
+  if (form != null) {
+    assertNormalize(form);
+    str = str.normalize(form);
+  }
+  let result = [];
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c < 128) {
+      result.push(c);
+    } else if (c < 2048) {
+      result.push(c >> 6 | 192);
+      result.push(c & 63 | 128);
+    } else if ((c & 64512) == 55296) {
+      i++;
+      const c2 = str.charCodeAt(i);
+      assertArgument(i < str.length && (c2 & 64512) === 56320, "invalid surrogate pair", "str", str);
+      const pair = 65536 + ((c & 1023) << 10) + (c2 & 1023);
+      result.push(pair >> 18 | 240);
+      result.push(pair >> 12 & 63 | 128);
+      result.push(pair >> 6 & 63 | 128);
+      result.push(pair & 63 | 128);
+    } else {
+      result.push(c >> 12 | 224);
+      result.push(c >> 6 & 63 | 128);
+      result.push(c & 63 | 128);
+    }
+  }
+  return new Uint8Array(result);
+}
+
+// node_modules/ethers/lib.esm/utils/fixednumber.js
 var BN_N1 = BigInt(-1);
 var BN_02 = BigInt(0);
 var BN_12 = BigInt(1);
@@ -862,7 +1027,7 @@ div_fn = function(o, safeOp) {
 };
 var FixedNumber = _FixedNumber;
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/units.js
+// node_modules/ethers/lib.esm/utils/units.js
 var names = [
   "wei",
   "kwei",
@@ -885,6 +1050,450 @@ function parseUnits(value, unit) {
   return FixedNumber.fromString(value, { decimals, width: 512 }).value;
 }
 
+// node_modules/@noble/hashes/esm/_assert.js
+function number(n) {
+  if (!Number.isSafeInteger(n) || n < 0)
+    throw new Error(`Wrong positive integer: ${n}`);
+}
+function bytes(b, ...lengths) {
+  if (!(b instanceof Uint8Array))
+    throw new Error("Expected Uint8Array");
+  if (lengths.length > 0 && !lengths.includes(b.length))
+    throw new Error(`Expected Uint8Array of length ${lengths}, not of length=${b.length}`);
+}
+function exists(instance, checkFinished = true) {
+  if (instance.destroyed)
+    throw new Error("Hash instance has been destroyed");
+  if (checkFinished && instance.finished)
+    throw new Error("Hash#digest() has already been called");
+}
+function output(out, instance) {
+  bytes(out);
+  const min = instance.outputLen;
+  if (out.length < min) {
+    throw new Error(`digestInto() expects output buffer of length at least ${min}`);
+  }
+}
+
+// node_modules/@noble/hashes/esm/_u64.js
+var U32_MASK64 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
+var _32n = /* @__PURE__ */ BigInt(32);
+function fromBig(n, le = false) {
+  if (le)
+    return { h: Number(n & U32_MASK64), l: Number(n >> _32n & U32_MASK64) };
+  return { h: Number(n >> _32n & U32_MASK64) | 0, l: Number(n & U32_MASK64) | 0 };
+}
+function split(lst, le = false) {
+  let Ah = new Uint32Array(lst.length);
+  let Al = new Uint32Array(lst.length);
+  for (let i = 0; i < lst.length; i++) {
+    const { h, l } = fromBig(lst[i], le);
+    [Ah[i], Al[i]] = [h, l];
+  }
+  return [Ah, Al];
+}
+var rotlSH = (h, l, s) => h << s | l >>> 32 - s;
+var rotlSL = (h, l, s) => l << s | h >>> 32 - s;
+var rotlBH = (h, l, s) => l << s - 32 | h >>> 64 - s;
+var rotlBL = (h, l, s) => h << s - 32 | l >>> 64 - s;
+
+// node_modules/@noble/hashes/esm/utils.js
+var u8a = (a) => a instanceof Uint8Array;
+var u32 = (arr) => new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
+var isLE = new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
+if (!isLE)
+  throw new Error("Non little-endian hardware is not supported");
+function utf8ToBytes(str) {
+  if (typeof str !== "string")
+    throw new Error(`utf8ToBytes expected string, got ${typeof str}`);
+  return new Uint8Array(new TextEncoder().encode(str));
+}
+function toBytes(data) {
+  if (typeof data === "string")
+    data = utf8ToBytes(data);
+  if (!u8a(data))
+    throw new Error(`expected Uint8Array, got ${typeof data}`);
+  return data;
+}
+var Hash = class {
+  // Safe version that clones internal state
+  clone() {
+    return this._cloneInto();
+  }
+};
+var toStr = {}.toString;
+function wrapConstructor(hashCons) {
+  const hashC = (msg) => hashCons().update(toBytes(msg)).digest();
+  const tmp = hashCons();
+  hashC.outputLen = tmp.outputLen;
+  hashC.blockLen = tmp.blockLen;
+  hashC.create = () => hashCons();
+  return hashC;
+}
+function wrapXOFConstructorWithOpts(hashCons) {
+  const hashC = (msg, opts) => hashCons(opts).update(toBytes(msg)).digest();
+  const tmp = hashCons({});
+  hashC.outputLen = tmp.outputLen;
+  hashC.blockLen = tmp.blockLen;
+  hashC.create = (opts) => hashCons(opts);
+  return hashC;
+}
+
+// node_modules/@noble/hashes/esm/sha3.js
+var [SHA3_PI, SHA3_ROTL, _SHA3_IOTA] = [[], [], []];
+var _0n = /* @__PURE__ */ BigInt(0);
+var _1n = /* @__PURE__ */ BigInt(1);
+var _2n = /* @__PURE__ */ BigInt(2);
+var _7n = /* @__PURE__ */ BigInt(7);
+var _256n = /* @__PURE__ */ BigInt(256);
+var _0x71n = /* @__PURE__ */ BigInt(113);
+for (let round = 0, R = _1n, x = 1, y = 0; round < 24; round++) {
+  [x, y] = [y, (2 * x + 3 * y) % 5];
+  SHA3_PI.push(2 * (5 * y + x));
+  SHA3_ROTL.push((round + 1) * (round + 2) / 2 % 64);
+  let t = _0n;
+  for (let j = 0; j < 7; j++) {
+    R = (R << _1n ^ (R >> _7n) * _0x71n) % _256n;
+    if (R & _2n)
+      t ^= _1n << (_1n << /* @__PURE__ */ BigInt(j)) - _1n;
+  }
+  _SHA3_IOTA.push(t);
+}
+var [SHA3_IOTA_H, SHA3_IOTA_L] = /* @__PURE__ */ split(_SHA3_IOTA, true);
+var rotlH = (h, l, s) => s > 32 ? rotlBH(h, l, s) : rotlSH(h, l, s);
+var rotlL = (h, l, s) => s > 32 ? rotlBL(h, l, s) : rotlSL(h, l, s);
+function keccakP(s, rounds = 24) {
+  const B = new Uint32Array(5 * 2);
+  for (let round = 24 - rounds; round < 24; round++) {
+    for (let x = 0; x < 10; x++)
+      B[x] = s[x] ^ s[x + 10] ^ s[x + 20] ^ s[x + 30] ^ s[x + 40];
+    for (let x = 0; x < 10; x += 2) {
+      const idx1 = (x + 8) % 10;
+      const idx0 = (x + 2) % 10;
+      const B0 = B[idx0];
+      const B1 = B[idx0 + 1];
+      const Th = rotlH(B0, B1, 1) ^ B[idx1];
+      const Tl = rotlL(B0, B1, 1) ^ B[idx1 + 1];
+      for (let y = 0; y < 50; y += 10) {
+        s[x + y] ^= Th;
+        s[x + y + 1] ^= Tl;
+      }
+    }
+    let curH = s[2];
+    let curL = s[3];
+    for (let t = 0; t < 24; t++) {
+      const shift = SHA3_ROTL[t];
+      const Th = rotlH(curH, curL, shift);
+      const Tl = rotlL(curH, curL, shift);
+      const PI = SHA3_PI[t];
+      curH = s[PI];
+      curL = s[PI + 1];
+      s[PI] = Th;
+      s[PI + 1] = Tl;
+    }
+    for (let y = 0; y < 50; y += 10) {
+      for (let x = 0; x < 10; x++)
+        B[x] = s[y + x];
+      for (let x = 0; x < 10; x++)
+        s[y + x] ^= ~B[(x + 2) % 10] & B[(x + 4) % 10];
+    }
+    s[0] ^= SHA3_IOTA_H[round];
+    s[1] ^= SHA3_IOTA_L[round];
+  }
+  B.fill(0);
+}
+var Keccak = class _Keccak extends Hash {
+  // NOTE: we accept arguments in bytes instead of bits here.
+  constructor(blockLen, suffix, outputLen, enableXOF = false, rounds = 24) {
+    super();
+    this.blockLen = blockLen;
+    this.suffix = suffix;
+    this.outputLen = outputLen;
+    this.enableXOF = enableXOF;
+    this.rounds = rounds;
+    this.pos = 0;
+    this.posOut = 0;
+    this.finished = false;
+    this.destroyed = false;
+    number(outputLen);
+    if (0 >= this.blockLen || this.blockLen >= 200)
+      throw new Error("Sha3 supports only keccak-f1600 function");
+    this.state = new Uint8Array(200);
+    this.state32 = u32(this.state);
+  }
+  keccak() {
+    keccakP(this.state32, this.rounds);
+    this.posOut = 0;
+    this.pos = 0;
+  }
+  update(data) {
+    exists(this);
+    const { blockLen, state } = this;
+    data = toBytes(data);
+    const len = data.length;
+    for (let pos = 0; pos < len; ) {
+      const take = Math.min(blockLen - this.pos, len - pos);
+      for (let i = 0; i < take; i++)
+        state[this.pos++] ^= data[pos++];
+      if (this.pos === blockLen)
+        this.keccak();
+    }
+    return this;
+  }
+  finish() {
+    if (this.finished)
+      return;
+    this.finished = true;
+    const { state, suffix, pos, blockLen } = this;
+    state[pos] ^= suffix;
+    if ((suffix & 128) !== 0 && pos === blockLen - 1)
+      this.keccak();
+    state[blockLen - 1] ^= 128;
+    this.keccak();
+  }
+  writeInto(out) {
+    exists(this, false);
+    bytes(out);
+    this.finish();
+    const bufferOut = this.state;
+    const { blockLen } = this;
+    for (let pos = 0, len = out.length; pos < len; ) {
+      if (this.posOut >= blockLen)
+        this.keccak();
+      const take = Math.min(blockLen - this.posOut, len - pos);
+      out.set(bufferOut.subarray(this.posOut, this.posOut + take), pos);
+      this.posOut += take;
+      pos += take;
+    }
+    return out;
+  }
+  xofInto(out) {
+    if (!this.enableXOF)
+      throw new Error("XOF is not possible for this instance");
+    return this.writeInto(out);
+  }
+  xof(bytes2) {
+    number(bytes2);
+    return this.xofInto(new Uint8Array(bytes2));
+  }
+  digestInto(out) {
+    output(out, this);
+    if (this.finished)
+      throw new Error("digest() was already called");
+    this.writeInto(out);
+    this.destroy();
+    return out;
+  }
+  digest() {
+    return this.digestInto(new Uint8Array(this.outputLen));
+  }
+  destroy() {
+    this.destroyed = true;
+    this.state.fill(0);
+  }
+  _cloneInto(to) {
+    const { blockLen, suffix, outputLen, rounds, enableXOF } = this;
+    to || (to = new _Keccak(blockLen, suffix, outputLen, enableXOF, rounds));
+    to.state32.set(this.state32);
+    to.pos = this.pos;
+    to.posOut = this.posOut;
+    to.finished = this.finished;
+    to.rounds = rounds;
+    to.suffix = suffix;
+    to.outputLen = outputLen;
+    to.enableXOF = enableXOF;
+    to.destroyed = this.destroyed;
+    return to;
+  }
+};
+var gen = (suffix, blockLen, outputLen) => wrapConstructor(() => new Keccak(blockLen, suffix, outputLen));
+var sha3_224 = /* @__PURE__ */ gen(6, 144, 224 / 8);
+var sha3_256 = /* @__PURE__ */ gen(6, 136, 256 / 8);
+var sha3_384 = /* @__PURE__ */ gen(6, 104, 384 / 8);
+var sha3_512 = /* @__PURE__ */ gen(6, 72, 512 / 8);
+var keccak_224 = /* @__PURE__ */ gen(1, 144, 224 / 8);
+var keccak_256 = /* @__PURE__ */ gen(1, 136, 256 / 8);
+var keccak_384 = /* @__PURE__ */ gen(1, 104, 384 / 8);
+var keccak_512 = /* @__PURE__ */ gen(1, 72, 512 / 8);
+var genShake = (suffix, blockLen, outputLen) => wrapXOFConstructorWithOpts((opts = {}) => new Keccak(blockLen, suffix, opts.dkLen === void 0 ? outputLen : opts.dkLen, true));
+var shake128 = /* @__PURE__ */ genShake(31, 168, 128 / 8);
+var shake256 = /* @__PURE__ */ genShake(31, 136, 256 / 8);
+
+// node_modules/ethers/lib.esm/crypto/keccak.js
+var locked = false;
+var _keccak256 = function(data) {
+  return keccak_256(data);
+};
+var __keccak256 = _keccak256;
+function keccak256(_data) {
+  const data = getBytes(_data, "data");
+  return hexlify(__keccak256(data));
+}
+keccak256._ = _keccak256;
+keccak256.lock = function() {
+  locked = true;
+};
+keccak256.register = function(func) {
+  if (locked) {
+    throw new TypeError("keccak256 is locked");
+  }
+  __keccak256 = func;
+};
+Object.freeze(keccak256);
+
+// node_modules/ethers/lib.esm/address/address.js
+var BN_03 = BigInt(0);
+var BN_36 = BigInt(36);
+function getChecksumAddress(address) {
+  address = address.toLowerCase();
+  const chars = address.substring(2).split("");
+  const expanded = new Uint8Array(40);
+  for (let i = 0; i < 40; i++) {
+    expanded[i] = chars[i].charCodeAt(0);
+  }
+  const hashed = getBytes(keccak256(expanded));
+  for (let i = 0; i < 40; i += 2) {
+    if (hashed[i >> 1] >> 4 >= 8) {
+      chars[i] = chars[i].toUpperCase();
+    }
+    if ((hashed[i >> 1] & 15) >= 8) {
+      chars[i + 1] = chars[i + 1].toUpperCase();
+    }
+  }
+  return "0x" + chars.join("");
+}
+var ibanLookup = {};
+for (let i = 0; i < 10; i++) {
+  ibanLookup[String(i)] = String(i);
+}
+for (let i = 0; i < 26; i++) {
+  ibanLookup[String.fromCharCode(65 + i)] = String(10 + i);
+}
+var safeDigits = 15;
+function ibanChecksum(address) {
+  address = address.toUpperCase();
+  address = address.substring(4) + address.substring(0, 2) + "00";
+  let expanded = address.split("").map((c) => {
+    return ibanLookup[c];
+  }).join("");
+  while (expanded.length >= safeDigits) {
+    let block = expanded.substring(0, safeDigits);
+    expanded = parseInt(block, 10) % 97 + expanded.substring(block.length);
+  }
+  let checksum = String(98 - parseInt(expanded, 10) % 97);
+  while (checksum.length < 2) {
+    checksum = "0" + checksum;
+  }
+  return checksum;
+}
+var Base36 = function() {
+  ;
+  const result = {};
+  for (let i = 0; i < 36; i++) {
+    const key = "0123456789abcdefghijklmnopqrstuvwxyz"[i];
+    result[key] = BigInt(i);
+  }
+  return result;
+}();
+function fromBase36(value) {
+  value = value.toLowerCase();
+  let result = BN_03;
+  for (let i = 0; i < value.length; i++) {
+    result = result * BN_36 + Base36[value[i]];
+  }
+  return result;
+}
+function getAddress(address) {
+  assertArgument(typeof address === "string", "invalid address", "address", address);
+  if (address.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
+    if (!address.startsWith("0x")) {
+      address = "0x" + address;
+    }
+    const result = getChecksumAddress(address);
+    assertArgument(!address.match(/([A-F].*[a-f])|([a-f].*[A-F])/) || result === address, "bad address checksum", "address", address);
+    return result;
+  }
+  if (address.match(/^XE[0-9]{2}[0-9A-Za-z]{30,31}$/)) {
+    assertArgument(address.substring(2, 4) === ibanChecksum(address), "bad icap checksum", "address", address);
+    let result = fromBase36(address.substring(4)).toString(16);
+    while (result.length < 40) {
+      result = "0" + result;
+    }
+    return getChecksumAddress("0x" + result);
+  }
+  assertArgument(false, "invalid address", "address", address);
+}
+
+// node_modules/ethers/lib.esm/hash/solidity.js
+var regexBytes = new RegExp("^bytes([0-9]+)$");
+var regexNumber = new RegExp("^(u?int)([0-9]*)$");
+var regexArray = new RegExp("^(.*)\\[([0-9]*)\\]$");
+function _pack(type, value, isArray) {
+  switch (type) {
+    case "address":
+      if (isArray) {
+        return getBytes(zeroPadValue(value, 32));
+      }
+      return getBytes(getAddress(value));
+    case "string":
+      return toUtf8Bytes(value);
+    case "bytes":
+      return getBytes(value);
+    case "bool":
+      value = !!value ? "0x01" : "0x00";
+      if (isArray) {
+        return getBytes(zeroPadValue(value, 32));
+      }
+      return getBytes(value);
+  }
+  let match = type.match(regexNumber);
+  if (match) {
+    let signed = match[1] === "int";
+    let size = parseInt(match[2] || "256");
+    assertArgument((!match[2] || match[2] === String(size)) && size % 8 === 0 && size !== 0 && size <= 256, "invalid number type", "type", type);
+    if (isArray) {
+      size = 256;
+    }
+    if (signed) {
+      value = toTwos(value, size);
+    }
+    return getBytes(zeroPadValue(toBeArray(value), size / 8));
+  }
+  match = type.match(regexBytes);
+  if (match) {
+    const size = parseInt(match[1]);
+    assertArgument(String(size) === match[1] && size !== 0 && size <= 32, "invalid bytes type", "type", type);
+    assertArgument(dataLength(value) === size, `invalid value for ${type}`, "value", value);
+    if (isArray) {
+      return getBytes(zeroPadBytes(value, 32));
+    }
+    return value;
+  }
+  match = type.match(regexArray);
+  if (match && Array.isArray(value)) {
+    const baseType = match[1];
+    const count = parseInt(match[2] || String(value.length));
+    assertArgument(count === value.length, `invalid array length for ${type}`, "value", value);
+    const result = [];
+    value.forEach(function(value2) {
+      result.push(_pack(baseType, value2, true));
+    });
+    return getBytes(concat(result));
+  }
+  assertArgument(false, "invalid type", "type", type);
+}
+function solidityPacked(types, values) {
+  assertArgument(types.length === values.length, "wrong number of values; expected ${ types.length }", "values", values);
+  const tight = [];
+  types.forEach(function(type, index) {
+    tight.push(_pack(type, values[index]));
+  });
+  return hexlify(concat(tight));
+}
+function solidityPackedKeccak256(types, values) {
+  return keccak256(solidityPacked(types, values));
+}
+
 // src/constants/constants.ts
 var EXPONENT_DECIMALS = 18;
 var EXPONENT_HALF_DECIMALS = EXPONENT_DECIMALS / 2;
@@ -892,6 +1501,8 @@ var INITIAL_EXPONENT = parseUnits("100000", EXPONENT_DECIMALS);
 var INITIAL_EXPONENT_WC = parseUnits("10", EXPONENT_HALF_DECIMALS);
 var INITIAL_EXPONENT_WT = parseUnits("10", EXPONENT_HALF_DECIMALS);
 var INITIAL_INDEX_PRICE = "0.01";
+var ORACLE_PRICE_DECIMAL = 7;
+var MIN_PRICE_CHANGE_PPM = 4e3;
 
 // src/types/types.ts
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
@@ -1068,45 +1679,44 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
 }
 
 // src/algorithm/oracle.ts
-var getPriceDecimals = (price) => {
-  if (!price) {
-    return 0;
-  }
-  const p = price.split(".");
-  if (p.length < 2) {
-    return 0;
-  }
-  return p[1].length;
-};
-var getPriceExponent = (price) => {
-  if (!price) {
-    return NaN;
-  }
-  const p = price.split(".");
-  const a = Number(p[0]);
-  if (a > 0) {
-    return -p[0].length;
-  } else if (p.length < 2) {
-    return NaN;
-  } else {
-    const x = p[1].lastIndexOf("0") + 2;
-    return -9 - x;
-  }
-};
 var getPriceAtomicResolution = (price) => {
-  if (!price) {
-    return NaN;
-  }
-  const p = price.split(".");
-  const a = Number(p[0]);
-  if (a > 0) {
-    return -(5 + p[0].length);
-  } else if (p.length < 2) {
-    return NaN;
-  } else {
-    const x = p[1].lastIndexOf("0") + 2;
-    return x - 6;
-  }
+  if (!price || !isFinite(price) || price <= 0)
+    return 0;
+  if (price >= 1e4)
+    return -9;
+  if (price >= 1e3)
+    return -8;
+  if (price >= 300)
+    return -7;
+  if (price >= 50)
+    return -6;
+  if (price >= 1)
+    return -5;
+  if (price >= 0.1)
+    return -4;
+  if (price >= 0.01)
+    return -3;
+  if (price >= 1e-3)
+    return -2;
+  if (price >= 1e-4)
+    return -1;
+  if (price >= 1e-5)
+    return 0;
+  return 0;
+};
+var generateEventHash = (eventTag, title) => {
+  return solidityPackedKeccak256(["string", "string"], [eventTag, title]);
+};
+var getMarketParameters = (ticker, price) => {
+  return {
+    ticker,
+    priceExponent: -ORACLE_PRICE_DECIMAL,
+    minPriceChange: MIN_PRICE_CHANGE_PPM,
+    atomicResolution: getPriceAtomicResolution(Number(price)),
+    quantumConversionExponent: -9,
+    stepBaseQuantums: 1e6,
+    subticksPerTick: 1e5
+  };
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
@@ -1117,13 +1727,20 @@ var getPriceAtomicResolution = (price) => {
   INITIAL_EXPONENT_WC,
   INITIAL_EXPONENT_WT,
   INITIAL_INDEX_PRICE,
+  MIN_PRICE_CHANGE_PPM,
+  ORACLE_PRICE_DECIMAL,
   VoteSource,
   VotedAB,
   computeBiasAdjustedIndexPrice,
   computeLogReturn,
+  generateEventHash,
+  getMarketParameters,
   getPriceAtomicResolution,
-  getPriceDecimals,
-  getPriceExponent,
   tanhClampDelta
 });
+/*! Bundled license information:
+
+@noble/hashes/esm/utils.js:
+  (*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) *)
+*/
 //# sourceMappingURL=index.cjs.map
