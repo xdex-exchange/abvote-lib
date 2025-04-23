@@ -8,4 +8,4 @@ export const INITIAL_EXPONENT_WT = parseUnits("10", EXPONENT_HALF_DECIMALS);
 
 export const INITIAL_INDEX_PRICE = "0.01";
 export const ORACLE_PRICE_DECIMAL = 7;
-export const MIN_PRICE_CHANGE_PPM = 4_000; // value/1000000
+export const MIN_PRICE_CHANGE_PPM = 1;

@@ -16,9 +16,6 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   biasImpactPercent?: number;
 };
 
-// tokenDelta：determined only by token price movements and weights;
-// biasDelta：由 tokenDelta × exponentPrice 带来的放大/缓冲；
-
 export function computeBiasAdjustedIndexPrice(
   prices: TokenPriceMap,
   prevPrices: TokenPriceMap,
