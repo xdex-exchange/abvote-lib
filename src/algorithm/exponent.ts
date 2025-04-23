@@ -7,6 +7,7 @@ import {
   INITIAL_EXPONENT_WT,
 } from "../constants/constants";
 import { VoteSource, VotedAB } from "../types/types";
+import Decimal from "decimal.js";
 
 export class ExponentService {
   private readonly decimals = EXPONENT_DECIMALS;
@@ -91,6 +92,12 @@ export class ExponentService {
       wt: this.wt,
       exponent: this.exponent,
     };
+  }
+
+  getExponentPrice() {
+    const exponentA = new Decimal(this.a.toString());
+    const exponentB = new Decimal(this.b.toString());
+    return exponentB.div(exponentA);
   }
 
   serialize() {

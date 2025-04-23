@@ -34,6 +34,10 @@ var computeLogReturn = (current, previous) => {
     return new Decimal(0);
   return current.div(previous).log();
 };
+function tanhClampDelta(delta, maxPercent) {
+  const maxDelta = Decimal.ln(1 + maxPercent / 100);
+  return Decimal.tanh(delta.div(maxDelta)).mul(maxDelta);
+}
 
 // node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
@@ -854,6 +858,7 @@ var VotedAB = /* @__PURE__ */ ((VotedAB2) => {
 })(VotedAB || {});
 
 // src/algorithm/exponent.ts
+import Decimal2 from "decimal.js";
 var ExponentService = class {
   constructor() {
     this.decimals = EXPONENT_DECIMALS;
@@ -918,6 +923,11 @@ var ExponentService = class {
       exponent: this.exponent
     };
   }
+  getExponentPrice() {
+    const exponentA = new Decimal2(this.a.toString());
+    const exponentB = new Decimal2(this.b.toString());
+    return exponentB.div(exponentA);
+  }
   serialize() {
     return JSON.stringify({
       a: this.a + "",
@@ -938,26 +948,26 @@ var ExponentService = class {
 };
 
 // src/algorithm/indexPrice.ts
-import Decimal3 from "decimal.js";
+import Decimal4 from "decimal.js";
 
 // src/algorithm/volatility.ts
-import Decimal2 from "decimal.js";
+import Decimal3 from "decimal.js";
 function applyVolatilityNoise(delta, options) {
-  const amplifier = new Decimal2(options?.volatilityAmplifier ?? 1.2);
+  const amplifier = new Decimal3(options?.volatilityAmplifier ?? 1.2);
   const noiseRange = options?.noiseRange ?? 0.02;
-  const amplified = delta.mul(Decimal2.pow(delta.abs().add(1), amplifier));
-  const noise = new Decimal2(Math.random() * noiseRange - noiseRange / 2);
+  const amplified = delta.mul(Decimal3.pow(delta.abs().add(1), amplifier));
+  const noise = new Decimal3(Math.random() * noiseRange - noiseRange / 2);
   return amplified.add(noise);
 }
 
 // src/algorithm/indexPrice.ts
-function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal3(INITIAL_INDEX_PRICE), options) {
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal4(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
-    return new Decimal3(INITIAL_INDEX_PRICE);
+    return new Decimal4(INITIAL_INDEX_PRICE);
   const prevSymbols = Object.keys(prevPrices);
   if (prevSymbols.length < 2)
-    return new Decimal3(INITIAL_INDEX_PRICE);
+    return new Decimal4(INITIAL_INDEX_PRICE);
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
   const aaPrice = prices[aaSymbol];
@@ -967,22 +977,44 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const aaWeight = weights[aaSymbol];
   const bbWeight = weights[bbSymbol];
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
-    return new Decimal3(INITIAL_INDEX_PRICE);
+    return new Decimal4(INITIAL_INDEX_PRICE);
   }
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
   const rB = computeLogReturn(bbPrice, bbPrevPrice);
   const totalWeight = aaWeight.add(bbWeight);
   if (totalWeight.eq(0))
-    return new Decimal3(1);
-  const weightedDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
-  let adjustedDelta = weightedDelta.mul(exponentPrice);
+    return new Decimal4(INITIAL_INDEX_PRICE);
+  const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
+  const cappedTokenDelta = tanhClampDelta(
+    tokenDelta,
+    options?.tokenImpactPercent ?? 1.5
+  );
+  const biasMultiplier = exponentPrice;
+  const rawBiasDelta = cappedTokenDelta.mul(biasMultiplier);
+  const cappedBiasDelta = tanhClampDelta(
+    rawBiasDelta.sub(cappedTokenDelta),
+    options?.biasImpactPercent ?? 1.5
+  );
+  let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
+  if (options?.maxStepPercent) {
+    adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
+  }
+  if (options?.maxDailyPercent && options?.price24hAgo) {
+    const return24h = Decimal4.ln(prevIndexPrice.div(options.price24hAgo));
+    const effectiveDailyDelta = adjustedDelta.add(return24h);
+    const cappedEffective = tanhClampDelta(
+      effectiveDailyDelta,
+      options.maxDailyPercent
+    );
+    adjustedDelta = cappedEffective.sub(return24h);
+  }
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
       volatilityAmplifier: options.volatilityAmplifier,
       noiseRange: options.noiseRange
     });
   }
-  const indexPriceMultiplier = Decimal3.exp(adjustedDelta);
+  const indexPriceMultiplier = Decimal4.exp(adjustedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return nextIndexPrice;
 }
@@ -1042,6 +1074,7 @@ export {
   computeLogReturn,
   getPriceAtomicResolution,
   getPriceDecimals,
-  getPriceExponent
+  getPriceExponent,
+  tanhClampDelta
 };
 //# sourceMappingURL=index.js.map

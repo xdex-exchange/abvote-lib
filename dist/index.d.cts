@@ -12,6 +12,13 @@ import Decimal from 'decimal.js';
  *    - Returns 0 if either price is non-positive
  */
 declare const computeLogReturn: (current: Decimal, previous: Decimal) => Decimal;
+/**
+ * Tanh buffer delta to make it gradually slow as it approaches ± maxPercent
+ * @param delta Original Δ
+ * @param maxDelta Maximum price limit (logarithm)
+ * @returns Δ after smoothing
+ */
+declare function tanhClampDelta(delta: Decimal, maxPercent: number): Decimal;
 
 type TokenPriceMap = Record<string, Decimal>;
 type TokenWeightMap = Record<string, Decimal>;
@@ -53,6 +60,7 @@ declare class ExponentService {
         wt: bigint;
         exponent: bigint;
     };
+    getExponentPrice(): Decimal;
     serialize(): string;
     deserialize(json: string): void;
 }
@@ -61,6 +69,11 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     enableVolatility?: boolean;
     volatilityAmplifier?: number;
     noiseRange?: number;
+    maxStepPercent?: number;
+    maxDailyPercent?: number;
+    price24hAgo?: Decimal;
+    tokenImpactPercent?: number;
+    biasImpactPercent?: number;
 };
 declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): Decimal;
 
@@ -75,4 +88,4 @@ declare const INITIAL_EXPONENT_WC: bigint;
 declare const INITIAL_EXPONENT_WT: bigint;
 declare const INITIAL_INDEX_PRICE = "0.01";
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeLogReturn, getPriceAtomicResolution, getPriceDecimals, getPriceExponent };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeLogReturn, getPriceAtomicResolution, getPriceDecimals, getPriceExponent, tanhClampDelta };

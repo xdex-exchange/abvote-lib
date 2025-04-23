@@ -1,6 +1,6 @@
 // src/lib/indexPrice.ts
 import Decimal from "decimal.js";
-import { computeLogReturn } from "./math";
+import { computeLogReturn, tanhClampDelta } from "./math";
 import { TokenPriceMap, TokenWeightMap } from "../types/types";
 import { INITIAL_INDEX_PRICE } from "../constants/constants";
 import { applyVolatilityNoise } from "./volatility";
@@ -9,7 +9,15 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   enableVolatility?: boolean;
   volatilityAmplifier?: number;
   noiseRange?: number;
+  maxStepPercent?: number; // Maximum fluctuation percentage per step (for example, 3 means ± 3%)
+  maxDailyPercent?: number; // 24h cumulative maximum fluctuation percentage (e. g. 3 means ± 3%)
+  price24hAgo?: Decimal; // Used to limit 24-hour cumulative volatility (can be index or token price)
+  tokenImpactPercent?: number;
+  biasImpactPercent?: number;
 };
+
+// tokenDelta：determined only by token price movements and weights;
+// biasDelta：由 tokenDelta × exponentPrice 带来的放大/缓冲；
 
 export function computeBiasAdjustedIndexPrice(
   prices: TokenPriceMap,
@@ -51,12 +59,39 @@ export function computeBiasAdjustedIndexPrice(
 
   // Step 2: Weighted combination (AA forward, BB reverse)
   const totalWeight = aaWeight.add(bbWeight);
-  if (totalWeight.eq(0)) return new Decimal(1);
+  if (totalWeight.eq(0)) return new Decimal(INITIAL_INDEX_PRICE);
 
-  const weightedDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
+  // Step 3: Weighted price return (token impact)
+  const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
+  const cappedTokenDelta = tanhClampDelta(
+    tokenDelta,
+    options?.tokenImpactPercent ?? 1.5
+  );
 
-  // Step 3: Apply exponent-based amplification (from voting bias)
-  let adjustedDelta = weightedDelta.mul(exponentPrice);
+  // Step 3: Voting exponent effect (bias impact)
+  const biasMultiplier = exponentPrice;
+  const rawBiasDelta = cappedTokenDelta.mul(biasMultiplier);
+  const cappedBiasDelta = tanhClampDelta(
+    rawBiasDelta.sub(cappedTokenDelta),
+    options?.biasImpactPercent ?? 1.5
+  );
+  let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
+
+  // Step 3.1: Smooth Limiting per step
+  if (options?.maxStepPercent) {
+    adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
+  }
+
+  // Step 3.2: Daily Fluctuation Smoothing Limiting (based on index or token price)
+  if (options?.maxDailyPercent && options?.price24hAgo) {
+    const return24h = Decimal.ln(prevIndexPrice.div(options.price24hAgo));
+    const effectiveDailyDelta = adjustedDelta.add(return24h);
+    const cappedEffective = tanhClampDelta(
+      effectiveDailyDelta,
+      options.maxDailyPercent
+    );
+    adjustedDelta = cappedEffective.sub(return24h);
+  }
 
   // Step 3.5: Optional - Apply synthetic volatility for stimulation
   if (options?.enableVolatility) {

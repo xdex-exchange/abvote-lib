@@ -70,7 +70,8 @@ __export(src_exports, {
   computeLogReturn: () => computeLogReturn,
   getPriceAtomicResolution: () => getPriceAtomicResolution,
   getPriceDecimals: () => getPriceDecimals,
-  getPriceExponent: () => getPriceExponent
+  getPriceExponent: () => getPriceExponent,
+  tanhClampDelta: () => tanhClampDelta
 });
 module.exports = __toCommonJS(src_exports);
 
@@ -81,6 +82,10 @@ var computeLogReturn = (current, previous) => {
     return new import_decimal.default(0);
   return current.div(previous).log();
 };
+function tanhClampDelta(delta, maxPercent) {
+  const maxDelta = import_decimal.default.ln(1 + maxPercent / 100);
+  return import_decimal.default.tanh(delta.div(maxDelta)).mul(maxDelta);
+}
 
 // node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
@@ -901,6 +906,7 @@ var VotedAB = /* @__PURE__ */ ((VotedAB2) => {
 })(VotedAB || {});
 
 // src/algorithm/exponent.ts
+var import_decimal2 = __toESM(require("decimal.js"), 1);
 var ExponentService = class {
   constructor() {
     this.decimals = EXPONENT_DECIMALS;
@@ -965,6 +971,11 @@ var ExponentService = class {
       exponent: this.exponent
     };
   }
+  getExponentPrice() {
+    const exponentA = new import_decimal2.default(this.a.toString());
+    const exponentB = new import_decimal2.default(this.b.toString());
+    return exponentB.div(exponentA);
+  }
   serialize() {
     return JSON.stringify({
       a: this.a + "",
@@ -985,26 +996,26 @@ var ExponentService = class {
 };
 
 // src/algorithm/indexPrice.ts
-var import_decimal3 = __toESM(require("decimal.js"), 1);
+var import_decimal4 = __toESM(require("decimal.js"), 1);
 
 // src/algorithm/volatility.ts
-var import_decimal2 = __toESM(require("decimal.js"), 1);
+var import_decimal3 = __toESM(require("decimal.js"), 1);
 function applyVolatilityNoise(delta, options) {
-  const amplifier = new import_decimal2.default(options?.volatilityAmplifier ?? 1.2);
+  const amplifier = new import_decimal3.default(options?.volatilityAmplifier ?? 1.2);
   const noiseRange = options?.noiseRange ?? 0.02;
-  const amplified = delta.mul(import_decimal2.default.pow(delta.abs().add(1), amplifier));
-  const noise = new import_decimal2.default(Math.random() * noiseRange - noiseRange / 2);
+  const amplified = delta.mul(import_decimal3.default.pow(delta.abs().add(1), amplifier));
+  const noise = new import_decimal3.default(Math.random() * noiseRange - noiseRange / 2);
   return amplified.add(noise);
 }
 
 // src/algorithm/indexPrice.ts
-function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal3.default(INITIAL_INDEX_PRICE), options) {
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal4.default(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
-    return new import_decimal3.default(INITIAL_INDEX_PRICE);
+    return new import_decimal4.default(INITIAL_INDEX_PRICE);
   const prevSymbols = Object.keys(prevPrices);
   if (prevSymbols.length < 2)
-    return new import_decimal3.default(INITIAL_INDEX_PRICE);
+    return new import_decimal4.default(INITIAL_INDEX_PRICE);
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
   const aaPrice = prices[aaSymbol];
@@ -1014,22 +1025,44 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const aaWeight = weights[aaSymbol];
   const bbWeight = weights[bbSymbol];
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
-    return new import_decimal3.default(INITIAL_INDEX_PRICE);
+    return new import_decimal4.default(INITIAL_INDEX_PRICE);
   }
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
   const rB = computeLogReturn(bbPrice, bbPrevPrice);
   const totalWeight = aaWeight.add(bbWeight);
   if (totalWeight.eq(0))
-    return new import_decimal3.default(1);
-  const weightedDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
-  let adjustedDelta = weightedDelta.mul(exponentPrice);
+    return new import_decimal4.default(INITIAL_INDEX_PRICE);
+  const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
+  const cappedTokenDelta = tanhClampDelta(
+    tokenDelta,
+    options?.tokenImpactPercent ?? 1.5
+  );
+  const biasMultiplier = exponentPrice;
+  const rawBiasDelta = cappedTokenDelta.mul(biasMultiplier);
+  const cappedBiasDelta = tanhClampDelta(
+    rawBiasDelta.sub(cappedTokenDelta),
+    options?.biasImpactPercent ?? 1.5
+  );
+  let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
+  if (options?.maxStepPercent) {
+    adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
+  }
+  if (options?.maxDailyPercent && options?.price24hAgo) {
+    const return24h = import_decimal4.default.ln(prevIndexPrice.div(options.price24hAgo));
+    const effectiveDailyDelta = adjustedDelta.add(return24h);
+    const cappedEffective = tanhClampDelta(
+      effectiveDailyDelta,
+      options.maxDailyPercent
+    );
+    adjustedDelta = cappedEffective.sub(return24h);
+  }
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
       volatilityAmplifier: options.volatilityAmplifier,
       noiseRange: options.noiseRange
     });
   }
-  const indexPriceMultiplier = import_decimal3.default.exp(adjustedDelta);
+  const indexPriceMultiplier = import_decimal4.default.exp(adjustedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return nextIndexPrice;
 }
@@ -1090,6 +1123,7 @@ var getPriceAtomicResolution = (price) => {
   computeLogReturn,
   getPriceAtomicResolution,
   getPriceDecimals,
-  getPriceExponent
+  getPriceExponent,
+  tanhClampDelta
 });
 //# sourceMappingURL=index.cjs.map
