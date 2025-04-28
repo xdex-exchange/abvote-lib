@@ -58,11 +58,13 @@ export function computeBiasAdjustedIndexPrice(
   const totalWeight = aaWeight.add(bbWeight);
   if (totalWeight.eq(0)) return new Decimal(0);
 
+  const halfMaxStepPercent = (options?.maxStepPercent ?? 3) / 2;
+
   // Step 3: Weighted price return (token impact)
   const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
   const cappedTokenDelta = tanhClampDelta(
     tokenDelta,
-    options?.tokenImpactPercent ?? 1.5
+    options?.tokenImpactPercent ?? halfMaxStepPercent
   );
 
   // Step 3: Voting exponent effect (bias impact)
@@ -70,7 +72,7 @@ export function computeBiasAdjustedIndexPrice(
   const rawBiasDelta = cappedTokenDelta.mul(biasMultiplier);
   const cappedBiasDelta = tanhClampDelta(
     rawBiasDelta.sub(cappedTokenDelta),
-    options?.biasImpactPercent ?? 1.5
+    options?.biasImpactPercent ?? halfMaxStepPercent
   );
   let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
 
