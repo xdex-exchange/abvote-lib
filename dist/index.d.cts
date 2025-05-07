@@ -24,7 +24,8 @@ type TokenPriceMap = Record<string, Decimal>;
 type TokenWeightMap = Record<string, Decimal>;
 declare enum VoteSource {
     TWITTER = "TWITTER",
-    CHAIN = "CHAIN"
+    CHAIN = "CHAIN",
+    USER = "USER"
 }
 declare enum VotedAB {
     A = "A",
