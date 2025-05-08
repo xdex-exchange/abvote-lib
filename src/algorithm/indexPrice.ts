@@ -67,16 +67,18 @@ export function computeBiasAdjustedIndexPrice(
     options?.tokenImpactPercent ?? halfMaxStepPercent
   );
 
-  // Step 3: Voting exponent effect (bias impact)
+  // Step 4: Voting exponent effect (bias impact)
   const biasMultiplier = exponentPrice;
   const rawBiasDelta = cappedTokenDelta.mul(biasMultiplier);
   const cappedBiasDelta = tanhClampDelta(
     rawBiasDelta.sub(cappedTokenDelta),
     options?.biasImpactPercent ?? halfMaxStepPercent
   );
+
+  // Step 5: Combine
   let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
 
-  // Step 3.5: Optional - Apply synthetic volatility for stimulation
+  // Step 5.1: Optional - Apply synthetic volatility for stimulation
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
       volatilityAmplifier: options.volatilityAmplifier,
@@ -84,12 +86,12 @@ export function computeBiasAdjustedIndexPrice(
     });
   }
 
-  // Step 3.1: Smooth Limiting per step
+  // Step 5.2: Smooth Limiting per step
   if (options?.maxStepPercent) {
     adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
   }
 
-  // Step 3.2: Daily Fluctuation Smoothing Limiting (based on index or token price)
+  // Step 5.3: Daily Fluctuation Smoothing Limiting (based on index or token price)
   if (options?.maxDailyPercent && options?.price24hAgo) {
     const return24h = Decimal.ln(prevIndexPrice.div(options.price24hAgo));
     const effectiveDailyDelta = adjustedDelta.add(return24h);
@@ -100,7 +102,7 @@ export function computeBiasAdjustedIndexPrice(
     adjustedDelta = cappedEffective.sub(return24h);
   }
 
-  // Step 4: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
+  // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
   const indexPriceMultiplier = Decimal.exp(adjustedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
 
