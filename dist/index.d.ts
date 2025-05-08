@@ -98,5 +98,7 @@ declare const INITIAL_EXPONENT_WT: bigint;
 declare const INITIAL_INDEX_PRICE = "0.01";
 declare const ORACLE_PRICE_DECIMAL = 7;
 declare const MIN_PRICE_CHANGE_PPM = 1;
+declare const TWITTER_VOTE_AMOUNT = 10;
+declare const USER_VOTE_AMOUNT = 1;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_PRICE_CHANGE_PPM, ORACLE_PRICE_DECIMAL, TokenPriceMap, TokenWeightMap, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeLogReturn, generateEventHash, getMarketParameters, getPriceAtomicResolution, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_PRICE_CHANGE_PPM, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeLogReturn, generateEventHash, getMarketParameters, getPriceAtomicResolution, tanhClampDelta };

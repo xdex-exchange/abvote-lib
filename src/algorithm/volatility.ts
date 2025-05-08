@@ -1,5 +1,8 @@
 import Decimal from "decimal.js";
 
+const defaultVolatilityAmplifier = 1.2;
+const defaultNoiseRange = 0.02;
+
 export function applyVolatilityNoise(
   delta: Decimal,
   options?: {
@@ -7,8 +10,10 @@ export function applyVolatilityNoise(
     noiseRange?: number; // default: 0.002
   }
 ): Decimal {
-  const amplifier = new Decimal(options?.volatilityAmplifier ?? 1.2);
-  const noiseRange = options?.noiseRange ?? 0.02;
+  const amplifier = new Decimal(
+    options?.volatilityAmplifier ?? defaultVolatilityAmplifier
+  );
+  const noiseRange = options?.noiseRange ?? defaultNoiseRange;
 
   // Step 1: Amplify based on the absolute value of delta
   const amplified = delta.mul(Decimal.pow(delta.abs().add(1), amplifier));
