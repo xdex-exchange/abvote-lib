@@ -76,6 +76,14 @@ export function computeBiasAdjustedIndexPrice(
   );
   let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
 
+  // Step 3.5: Optional - Apply synthetic volatility for stimulation
+  if (options?.enableVolatility) {
+    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange,
+    });
+  }
+
   // Step 3.1: Smooth Limiting per step
   if (options?.maxStepPercent) {
     adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
@@ -90,14 +98,6 @@ export function computeBiasAdjustedIndexPrice(
       options.maxDailyPercent
     );
     adjustedDelta = cappedEffective.sub(return24h);
-  }
-
-  // Step 3.5: Optional - Apply synthetic volatility for stimulation
-  if (options?.enableVolatility) {
-    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange,
-    });
   }
 
   // Step 4: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
