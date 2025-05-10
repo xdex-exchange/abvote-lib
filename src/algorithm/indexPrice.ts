@@ -83,19 +83,19 @@ export function computeBiasAdjustedIndexPrice(
     console.log(`Combine adjustedDelta:${adjustedDelta.toString()}`);
   }
 
-  // Step 5.1: Optional - Apply synthetic volatility for stimulation
-  if (options?.enableVolatility) {
-    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange,
-    });
-  }
+  // // Step 5.1: Optional - Apply synthetic volatility for stimulation
+  // if (options?.enableVolatility) {
+  //   adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+  //     volatilityAmplifier: options.volatilityAmplifier,
+  //     noiseRange: options.noiseRange,
+  //   });
+  // }
 
-  if (options?.showLog) {
-    console.log(
-      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
-    );
-  }
+  // if (options?.showLog) {
+  //   console.log(
+  //     `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
+  //   );
+  // }
 
   // Step 5.2: Smooth Limiting per step
   if (options?.maxStepPercent) {
@@ -122,6 +122,20 @@ export function computeBiasAdjustedIndexPrice(
   if (options?.showLog) {
     console.log(
       `Daily Fluctuation Smoothing Limiting adjustedDelta:${adjustedDelta.toString()}`
+    );
+  }
+
+  // Step 5.1: Optional - Apply synthetic volatility for stimulation
+  if (options?.enableVolatility) {
+    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange,
+    });
+  }
+
+  if (options?.showLog) {
+    console.log(
+      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
     );
   }
 

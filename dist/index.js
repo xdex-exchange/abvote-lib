@@ -1616,17 +1616,6 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (options?.showLog) {
     console.log(`Combine adjustedDelta:${adjustedDelta.toString()}`);
   }
-  if (options?.enableVolatility) {
-    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange
-    });
-  }
-  if (options?.showLog) {
-    console.log(
-      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
-    );
-  }
   if (options?.maxStepPercent) {
     adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
   }
@@ -1647,6 +1636,17 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (options?.showLog) {
     console.log(
       `Daily Fluctuation Smoothing Limiting adjustedDelta:${adjustedDelta.toString()}`
+    );
+  }
+  if (options?.enableVolatility) {
+    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange
+    });
+  }
+  if (options?.showLog) {
+    console.log(
+      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
     );
   }
   const indexPriceMultiplier = Decimal4.exp(adjustedDelta);
