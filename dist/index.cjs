@@ -1623,9 +1623,17 @@ function applyVolatilityNoise(delta, options) {
     options?.volatilityAmplifier ?? defaultVolatilityAmplifier
   );
   const noiseRange = options?.noiseRange ?? defaultNoiseRange;
-  const amplified = delta.mul(import_decimal3.default.pow(delta.abs().add(1), amplifier));
-  const noise = new import_decimal3.default(Math.random() * noiseRange - noiseRange / 2);
-  return amplified.add(noise);
+  const maxNoisePercent = options?.maxNoisePercent ?? 0.3;
+  const direction = delta.isNegative() ? -1 : 1;
+  const magnitude = delta.abs();
+  const amplifiedMagnitude = magnitude.mul(
+    import_decimal3.default.pow(magnitude.add(1), amplifier)
+  );
+  const rawNoise = new import_decimal3.default(Math.random() * noiseRange);
+  const maxAllowedNoise = amplifiedMagnitude.mul(maxNoisePercent);
+  const boundedNoise = import_decimal3.default.min(rawNoise, maxAllowedNoise);
+  const noisyDelta = amplifiedMagnitude.add(boundedNoise);
+  return new import_decimal3.default(direction).mul(noisyDelta);
 }
 
 // src/algorithm/indexPrice.ts
@@ -1668,6 +1676,17 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (options?.showLog) {
     console.log(`Combine adjustedDelta:${adjustedDelta.toString()}`);
   }
+  if (options?.enableVolatility) {
+    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange
+    });
+  }
+  if (options?.showLog) {
+    console.log(
+      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
+    );
+  }
   if (options?.maxStepPercent) {
     adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
   }
@@ -1688,17 +1707,6 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (options?.showLog) {
     console.log(
       `Daily Fluctuation Smoothing Limiting adjustedDelta:${adjustedDelta.toString()}`
-    );
-  }
-  if (options?.enableVolatility) {
-    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange
-    });
-  }
-  if (options?.showLog) {
-    console.log(
-      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
     );
   }
   const indexPriceMultiplier = import_decimal4.default.exp(adjustedDelta);

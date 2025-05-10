@@ -8,18 +8,30 @@ export function applyVolatilityNoise(
   options?: {
     volatilityAmplifier?: number; // default: 1.2
     noiseRange?: number; // default: 0.002
+    maxNoisePercent?: number; // default: 0.3=>30%
   }
 ): Decimal {
   const amplifier = new Decimal(
     options?.volatilityAmplifier ?? defaultVolatilityAmplifier
   );
   const noiseRange = options?.noiseRange ?? defaultNoiseRange;
+  const maxNoisePercent = options?.maxNoisePercent ?? 0.3;
 
-  // Step 1: Amplify based on the absolute value of delta
-  const amplified = delta.mul(Decimal.pow(delta.abs().add(1), amplifier));
+  // Step 1: Magnitude & Direction
+  const direction = delta.isNegative() ? -1 : 1;
+  const magnitude = delta.abs();
 
-  // Step 2: Add small noise
-  const noise = new Decimal(Math.random() * noiseRange - noiseRange / 2);
+  // Step 2: Amplify the magnitude (preserve direction)
+  const amplifiedMagnitude = magnitude.mul(
+    Decimal.pow(magnitude.add(1), amplifier)
+  );
 
-  return amplified.add(noise);
+  // Step 3: Generate bounded noise
+  const rawNoise = new Decimal(Math.random() * noiseRange); // always positive
+  const maxAllowedNoise = amplifiedMagnitude.mul(maxNoisePercent);
+  const boundedNoise = Decimal.min(rawNoise, maxAllowedNoise);
+
+  // Step 4: Add noise to amplified magnitude and restore direction
+  const noisyDelta = amplifiedMagnitude.add(boundedNoise);
+  return new Decimal(direction).mul(noisyDelta);
 }
