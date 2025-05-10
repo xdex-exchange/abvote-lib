@@ -15,7 +15,7 @@ export function applyVolatilityNoise(
     options?.volatilityAmplifier ?? defaultVolatilityAmplifier
   );
   const noiseRange = options?.noiseRange ?? defaultNoiseRange;
-  const maxNoisePercent = options?.maxNoisePercent ?? 0.3;
+  const maxNoisePercent = options?.maxNoisePercent ?? 3;
 
   // Step 1: Magnitude & Direction
   const direction = delta.isNegative() ? -1 : 1;

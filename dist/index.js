@@ -1571,7 +1571,7 @@ function applyVolatilityNoise(delta, options) {
     options?.volatilityAmplifier ?? defaultVolatilityAmplifier
   );
   const noiseRange = options?.noiseRange ?? defaultNoiseRange;
-  const maxNoisePercent = options?.maxNoisePercent ?? 0.3;
+  const maxNoisePercent = options?.maxNoisePercent ?? 3;
   const direction = delta.isNegative() ? -1 : 1;
   const magnitude = delta.abs();
   const amplifiedMagnitude = magnitude.mul(
