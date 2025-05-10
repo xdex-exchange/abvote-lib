@@ -1613,14 +1613,27 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     options?.biasImpactPercent ?? halfMaxStepPercent
   );
   let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
+  if (options?.showLog) {
+    console.log(`Combine adjustedDelta:${adjustedDelta.toString()}`);
+  }
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
       volatilityAmplifier: options.volatilityAmplifier,
       noiseRange: options.noiseRange
     });
   }
+  if (options?.showLog) {
+    console.log(
+      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
+    );
+  }
   if (options?.maxStepPercent) {
     adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
+  }
+  if (options?.showLog) {
+    console.log(
+      `Smooth Limiting per step adjustedDelta:${adjustedDelta.toString()}`
+    );
   }
   if (options?.maxDailyPercent && options?.price24hAgo) {
     const return24h = Decimal4.ln(prevIndexPrice.div(options.price24hAgo));
@@ -1630,6 +1643,11 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
       options.maxDailyPercent
     );
     adjustedDelta = cappedEffective.sub(return24h);
+  }
+  if (options?.showLog) {
+    console.log(
+      `Daily Fluctuation Smoothing Limiting adjustedDelta:${adjustedDelta.toString()}`
+    );
   }
   const indexPriceMultiplier = Decimal4.exp(adjustedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);

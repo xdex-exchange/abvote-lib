@@ -14,6 +14,7 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   price24hAgo?: Decimal; // Used to limit 24-hour cumulative volatility (can be index or token price)
   tokenImpactPercent?: number;
   biasImpactPercent?: number;
+  showLog?: boolean;
 };
 
 export function computeBiasAdjustedIndexPrice(
@@ -78,6 +79,10 @@ export function computeBiasAdjustedIndexPrice(
   // Step 5: Combine
   let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
 
+  if (options?.showLog) {
+    console.log(`Combine adjustedDelta:${adjustedDelta.toString()}`);
+  }
+
   // Step 5.1: Optional - Apply synthetic volatility for stimulation
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
@@ -86,9 +91,21 @@ export function computeBiasAdjustedIndexPrice(
     });
   }
 
+  if (options?.showLog) {
+    console.log(
+      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
+    );
+  }
+
   // Step 5.2: Smooth Limiting per step
   if (options?.maxStepPercent) {
     adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
+  }
+
+  if (options?.showLog) {
+    console.log(
+      `Smooth Limiting per step adjustedDelta:${adjustedDelta.toString()}`
+    );
   }
 
   // Step 5.3: Daily Fluctuation Smoothing Limiting (based on index or token price)
@@ -100,6 +117,12 @@ export function computeBiasAdjustedIndexPrice(
       options.maxDailyPercent
     );
     adjustedDelta = cappedEffective.sub(return24h);
+  }
+
+  if (options?.showLog) {
+    console.log(
+      `Daily Fluctuation Smoothing Limiting adjustedDelta:${adjustedDelta.toString()}`
+    );
   }
 
   // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)

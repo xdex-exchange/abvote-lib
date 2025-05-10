@@ -75,6 +75,7 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     price24hAgo?: Decimal;
     tokenImpactPercent?: number;
     biasImpactPercent?: number;
+    showLog?: boolean;
 };
 declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): Decimal;
 
