@@ -1679,7 +1679,8 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
       volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange
+      noiseRange: options.noiseRange,
+      maxNoisePercent: options.maxNoisePercent
     });
   }
   if (options?.showLog) {
