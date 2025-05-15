@@ -1616,24 +1616,12 @@ var import_decimal4 = __toESM(require("decimal.js"), 1);
 
 // src/algorithm/volatility.ts
 var import_decimal3 = __toESM(require("decimal.js"), 1);
-var defaultVolatilityAmplifier = 1.2;
-var defaultNoiseRange = 0.02;
+var defaultVolatilityAmplifier = 10;
 function applyVolatilityNoise(delta, options) {
   const amplifier = new import_decimal3.default(
     options?.volatilityAmplifier ?? defaultVolatilityAmplifier
   );
-  const noiseRange = options?.noiseRange ?? defaultNoiseRange;
-  const maxNoisePercent = options?.maxNoisePercent ?? 3;
-  const direction = delta.isNegative() ? -1 : 1;
-  const magnitude = delta.abs();
-  const amplifiedMagnitude = magnitude.mul(
-    import_decimal3.default.pow(magnitude.add(1), amplifier)
-  );
-  const rawNoise = new import_decimal3.default(Math.random() * noiseRange);
-  const maxAllowedNoise = amplifiedMagnitude.mul(maxNoisePercent);
-  const boundedNoise = import_decimal3.default.min(rawNoise, maxAllowedNoise);
-  const noisyDelta = amplifiedMagnitude.add(boundedNoise);
-  return new import_decimal3.default(direction).mul(noisyDelta);
+  return delta.mul(amplifier);
 }
 
 // src/algorithm/indexPrice.ts
@@ -1678,9 +1666,7 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   }
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange,
-      maxNoisePercent: options.maxNoisePercent
+      volatilityAmplifier: options.volatilityAmplifier
     });
   }
   if (options?.showLog) {

@@ -69,8 +69,6 @@ declare class ExponentService {
 type ComputeBiasAdjustedIndexPriceOptions = {
     enableVolatility?: boolean;
     volatilityAmplifier?: number;
-    noiseRange?: number;
-    maxNoisePercent?: number;
     maxStepPercent?: number;
     maxDailyPercent?: number;
     price24hAgo?: Decimal;

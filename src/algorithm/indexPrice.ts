@@ -8,8 +8,6 @@ import { applyVolatilityNoise } from "./volatility";
 type ComputeBiasAdjustedIndexPriceOptions = {
   enableVolatility?: boolean;
   volatilityAmplifier?: number;
-  noiseRange?: number;
-  maxNoisePercent?: number;
   maxStepPercent?: number; // Maximum fluctuation percentage per step (for example, 3 means ± 3%)
   maxDailyPercent?: number; // 24h cumulative maximum fluctuation percentage (e. g. 3 means ± 3%)
   price24hAgo?: Decimal; // Used to limit 24-hour cumulative volatility (can be index or token price)
@@ -88,8 +86,6 @@ export function computeBiasAdjustedIndexPrice(
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
       volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange,
-      maxNoisePercent: options.maxNoisePercent,
     });
   }
 

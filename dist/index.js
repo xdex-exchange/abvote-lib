@@ -1564,24 +1564,12 @@ import Decimal4 from "decimal.js";
 
 // src/algorithm/volatility.ts
 import Decimal3 from "decimal.js";
-var defaultVolatilityAmplifier = 1.2;
-var defaultNoiseRange = 0.02;
+var defaultVolatilityAmplifier = 10;
 function applyVolatilityNoise(delta, options) {
   const amplifier = new Decimal3(
     options?.volatilityAmplifier ?? defaultVolatilityAmplifier
   );
-  const noiseRange = options?.noiseRange ?? defaultNoiseRange;
-  const maxNoisePercent = options?.maxNoisePercent ?? 3;
-  const direction = delta.isNegative() ? -1 : 1;
-  const magnitude = delta.abs();
-  const amplifiedMagnitude = magnitude.mul(
-    Decimal3.pow(magnitude.add(1), amplifier)
-  );
-  const rawNoise = new Decimal3(Math.random() * noiseRange);
-  const maxAllowedNoise = amplifiedMagnitude.mul(maxNoisePercent);
-  const boundedNoise = Decimal3.min(rawNoise, maxAllowedNoise);
-  const noisyDelta = amplifiedMagnitude.add(boundedNoise);
-  return new Decimal3(direction).mul(noisyDelta);
+  return delta.mul(amplifier);
 }
 
 // src/algorithm/indexPrice.ts
@@ -1626,9 +1614,7 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   }
   if (options?.enableVolatility) {
     adjustedDelta = applyVolatilityNoise(adjustedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange,
-      maxNoisePercent: options.maxNoisePercent
+      volatilityAmplifier: options.volatilityAmplifier
     });
   }
   if (options?.showLog) {
