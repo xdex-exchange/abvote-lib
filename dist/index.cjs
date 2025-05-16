@@ -1646,6 +1646,8 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   let rawCombinedDelta = tokenDelta.mul(tokenWeight).add(biasShiftStrengthDelta.mul(biasShiftWeight)).add(rawBiasScaleDelta.mul(biasScaleWeight));
   let combinedDelta = tanhClampDelta(rawCombinedDelta, maxStep);
   if (options?.showLog) {
+    console.log(`rA:${rA.toString()}`);
+    console.log(`rB:${rB.toString()}`);
     console.log(`tokenDelta: ${tokenDelta.toString()}`);
     console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
     console.log(`rawBiasScaleDelta: ${rawBiasScaleDelta.toString()}`);
