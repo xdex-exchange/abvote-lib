@@ -1560,26 +1560,14 @@ var ExponentService = class {
 };
 
 // src/algorithm/indexPrice.ts
-import Decimal4 from "decimal.js";
-
-// src/algorithm/volatility.ts
 import Decimal3 from "decimal.js";
-var defaultVolatilityAmplifier = 10;
-function applyVolatilityNoise(delta, options) {
-  const amplifier = new Decimal3(
-    options?.volatilityAmplifier ?? defaultVolatilityAmplifier
-  );
-  return delta.mul(amplifier);
-}
-
-// src/algorithm/indexPrice.ts
-function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal4(INITIAL_INDEX_PRICE), options) {
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal3(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
-    return new Decimal4(0);
+    return new Decimal3(0);
   const prevSymbols = Object.keys(prevPrices);
   if (prevSymbols.length < 2)
-    return new Decimal4(0);
+    return new Decimal3(0);
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
   const aaPrice = prices[aaSymbol];
@@ -1589,62 +1577,44 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const aaWeight = weights[aaSymbol];
   const bbWeight = weights[bbSymbol];
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
-    return new Decimal4(0);
+    return new Decimal3(0);
   }
+  const maxStep = options?.maxStepPercent ?? 20;
+  const tokenWeight = new Decimal3(options?.tokenWeight ?? 0.5);
+  const biasShiftWeight = new Decimal3(options?.biasShiftWeight ?? 0.25);
+  const biasScaleWeight = new Decimal3(options?.biasScaleWeight ?? 0.25);
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
   const rB = computeLogReturn(bbPrice, bbPrevPrice);
-  const totalWeight = aaWeight.add(bbWeight);
-  if (totalWeight.eq(0))
-    return new Decimal4(0);
-  const halfMaxStepPercent = (options?.maxStepPercent ?? 3) / 2;
-  const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalWeight);
-  const cappedTokenDelta = tanhClampDelta(
-    tokenDelta,
-    options?.tokenImpactPercent ?? halfMaxStepPercent
-  );
-  const biasMultiplier = exponentPrice;
-  const rawBiasDelta = cappedTokenDelta.mul(biasMultiplier);
-  const cappedBiasDelta = tanhClampDelta(
-    rawBiasDelta.sub(cappedTokenDelta),
-    options?.biasImpactPercent ?? halfMaxStepPercent
-  );
-  let adjustedDelta = cappedTokenDelta.add(cappedBiasDelta);
+  const totalTokenWeight = aaWeight.add(bbWeight);
+  if (totalTokenWeight.eq(0))
+    return new Decimal3(0);
+  const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalTokenWeight);
+  const biasShiftStrengthDelta = exponentPrice.sub(1);
+  const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(1));
+  let rawCombinedDelta = tokenDelta.mul(tokenWeight).add(biasShiftStrengthDelta.mul(biasShiftWeight)).add(rawBiasScaleDelta.mul(biasScaleWeight));
+  let combinedDelta = tanhClampDelta(rawCombinedDelta, maxStep);
   if (options?.showLog) {
-    console.log(`Combine adjustedDelta:${adjustedDelta.toString()}`);
-  }
-  if (options?.enableVolatility) {
-    adjustedDelta = applyVolatilityNoise(adjustedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier
-    });
-  }
-  if (options?.showLog) {
-    console.log(
-      `Apply synthetic volatility adjustedDelta:${adjustedDelta.toString()}`
-    );
-  }
-  if (options?.maxStepPercent) {
-    adjustedDelta = tanhClampDelta(adjustedDelta, options.maxStepPercent);
-  }
-  if (options?.showLog) {
-    console.log(
-      `Smooth Limiting per step adjustedDelta:${adjustedDelta.toString()}`
-    );
+    console.log(`tokenDelta: ${tokenDelta.toString()}`);
+    console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
+    console.log(`rawBiasScaleDelta: ${rawBiasScaleDelta.toString()}`);
+    console.log(`rawCombinedDelta: ${rawCombinedDelta.toString()}`);
+    console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
   if (options?.maxDailyPercent && options?.price24hAgo) {
-    const return24h = Decimal4.ln(prevIndexPrice.div(options.price24hAgo));
-    const effectiveDailyDelta = adjustedDelta.add(return24h);
+    const return24h = Decimal3.ln(prevIndexPrice.div(options.price24hAgo));
+    const effectiveDailyDelta = combinedDelta.add(return24h);
     const cappedEffective = tanhClampDelta(
       effectiveDailyDelta,
       options.maxDailyPercent
     );
-    adjustedDelta = cappedEffective.sub(return24h);
+    combinedDelta = cappedEffective.sub(return24h);
+    if (options?.showLog) {
+      console.log(
+        `Daily combinedDelta:${combinedDelta.toString()}, return24h:${return24h.toString()}, effectiveDailyDelta:${effectiveDailyDelta.toString()}, cappedEffective:${cappedEffective.toString()}`
+      );
+    }
   }
-  if (options?.showLog) {
-    console.log(
-      `Daily Fluctuation Smoothing Limiting adjustedDelta:${adjustedDelta.toString()}`
-    );
-  }
-  const indexPriceMultiplier = Decimal4.exp(adjustedDelta);
+  const indexPriceMultiplier = Decimal3.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return nextIndexPrice;
 }

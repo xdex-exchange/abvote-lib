@@ -67,13 +67,14 @@ declare class ExponentService {
 }
 
 type ComputeBiasAdjustedIndexPriceOptions = {
-    enableVolatility?: boolean;
-    volatilityAmplifier?: number;
     maxStepPercent?: number;
     maxDailyPercent?: number;
+    tokenWeight?: number;
     price24hAgo?: Decimal;
-    tokenImpactPercent?: number;
-    biasImpactPercent?: number;
+    biasShiftWeight?: number;
+    biasScaleWeight?: number;
+    biasShiftCapPercent?: number;
+    biasScaleCapPercent?: number;
     showLog?: boolean;
 };
 declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): Decimal;
