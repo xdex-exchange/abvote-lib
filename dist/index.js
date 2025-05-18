@@ -1579,7 +1579,6 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
     return new Decimal3(0);
   }
-  const maxStep = options?.maxStepPercent ?? 20;
   const tokenWeight = new Decimal3(options?.tokenWeight ?? 0.5);
   const biasShiftWeight = new Decimal3(options?.biasShiftWeight ?? 0.25);
   const biasScaleWeight = new Decimal3(options?.biasScaleWeight ?? 0.25);
@@ -1592,7 +1591,11 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const biasShiftStrengthDelta = exponentPrice.sub(1);
   const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(1));
   let rawCombinedDelta = tokenDelta.mul(tokenWeight).add(biasShiftStrengthDelta.mul(biasShiftWeight)).add(rawBiasScaleDelta.mul(biasScaleWeight));
-  let combinedDelta = tanhClampDelta(rawCombinedDelta, maxStep);
+  const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
+  const dynamicMax = Decimal3.max(recentVolatility.mul(3), new Decimal3(1e-3));
+  let combinedDelta = Decimal3.tanh(rawCombinedDelta.div(dynamicMax)).mul(
+    dynamicMax
+  );
   if (options?.showLog) {
     console.log(`rA:${rA.toString()}`);
     console.log(`rB:${rB.toString()}`);
@@ -1600,6 +1603,8 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
     console.log(`rawBiasScaleDelta: ${rawBiasScaleDelta.toString()}`);
     console.log(`rawCombinedDelta: ${rawCombinedDelta.toString()}`);
+    console.log(`recentVolatility: ${recentVolatility.toString()}`);
+    console.log(`dynamicMax: ${dynamicMax.toString()}`);
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
   if (options?.maxDailyPercent && options?.price24hAgo) {
@@ -1619,6 +1624,12 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const indexPriceMultiplier = Decimal3.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return nextIndexPrice;
+}
+function computeVolatility(deltas) {
+  if (!deltas.length)
+    return new Decimal3(0);
+  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal3(0));
+  return sum.div(deltas.length);
 }
 
 // src/algorithm/oracle.ts

@@ -5,7 +5,6 @@ import { TokenPriceMap, TokenWeightMap } from "../types/types";
 import { INITIAL_INDEX_PRICE } from "../constants/constants";
 
 type ComputeBiasAdjustedIndexPriceOptions = {
-  maxStepPercent?: number; // Maximum fluctuation percentage per step (for example, 3 means ± 3%)
   maxDailyPercent?: number; // 24h cumulative maximum fluctuation percentage (e. g. 3 means ± 3%)
   tokenWeight?: number; // Weight of the impact of token price fluctuations on the index
   price24hAgo?: Decimal; // Used to limit 24-hour cumulative volatility (can be index or token price)
@@ -13,6 +12,7 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   biasScaleWeight?: number; // Vote to enlarge/reduce the weight of the price increase or decrease.
   biasShiftCapPercent?: number; // The most single vote can push the index up or down.
   biasScaleCapPercent?: number; // The maximum amount of increase or decrease that can be zoomed in/out at a time.
+  prevTokenDeltas?: Decimal[];
   showLog?: boolean;
 };
 
@@ -51,7 +51,6 @@ export function computeBiasAdjustedIndexPrice(
   }
 
   // Configs
-  const maxStep = options?.maxStepPercent ?? 20;
   const tokenWeight = new Decimal(options?.tokenWeight ?? 0.5);
   const biasShiftWeight = new Decimal(options?.biasShiftWeight ?? 0.25);
   const biasScaleWeight = new Decimal(options?.biasScaleWeight ?? 0.25);
@@ -82,8 +81,12 @@ export function computeBiasAdjustedIndexPrice(
     .add(biasShiftStrengthDelta.mul(biasShiftWeight))
     .add(rawBiasScaleDelta.mul(biasScaleWeight));
 
-  // Step 5: Final step clamp
-  let combinedDelta = tanhClampDelta(rawCombinedDelta, maxStep);
+  // Step 5: Adaptive delta clipping (maxStepPercent removed, based solely on tokenDelta history)
+  const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
+  const dynamicMax = Decimal.max(recentVolatility.mul(3), new Decimal(0.001)); // Avoid 0, make sure there is a little sensitivity
+  let combinedDelta = Decimal.tanh(rawCombinedDelta.div(dynamicMax)).mul(
+    dynamicMax
+  );
 
   if (options?.showLog) {
     console.log(`rA:${rA.toString()}`);
@@ -92,6 +95,8 @@ export function computeBiasAdjustedIndexPrice(
     console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
     console.log(`rawBiasScaleDelta: ${rawBiasScaleDelta.toString()}`);
     console.log(`rawCombinedDelta: ${rawCombinedDelta.toString()}`);
+    console.log(`recentVolatility: ${recentVolatility.toString()}`);
+    console.log(`dynamicMax: ${dynamicMax.toString()}`);
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
 
@@ -117,4 +122,10 @@ export function computeBiasAdjustedIndexPrice(
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
 
   return nextIndexPrice;
+}
+
+function computeVolatility(deltas: Decimal[]): Decimal {
+  if (!deltas.length) return new Decimal(0);
+  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal(0));
+  return sum.div(deltas.length);
 }

@@ -67,7 +67,6 @@ declare class ExponentService {
 }
 
 type ComputeBiasAdjustedIndexPriceOptions = {
-    maxStepPercent?: number;
     maxDailyPercent?: number;
     tokenWeight?: number;
     price24hAgo?: Decimal;
@@ -75,6 +74,7 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     biasScaleWeight?: number;
     biasShiftCapPercent?: number;
     biasScaleCapPercent?: number;
+    prevTokenDeltas?: Decimal[];
     showLog?: boolean;
 };
 declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): Decimal;
