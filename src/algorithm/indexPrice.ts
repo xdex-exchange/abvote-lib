@@ -2,7 +2,7 @@
 import Decimal from "decimal.js";
 import { computeLogReturn, tanhClampDelta } from "./math";
 import { TokenPriceMap, TokenWeightMap } from "../types/types";
-import { INITIAL_INDEX_PRICE } from "../constants/constants";
+import { INITIAL_INDEX_PRICE, ZERO } from "../constants/constants";
 
 type ComputeBiasAdjustedIndexPriceOptions = {
   maxDailyPercent?: number; // 24h cumulative maximum fluctuation percentage (e. g. 3 means ± 3%)
@@ -23,11 +23,19 @@ export function computeBiasAdjustedIndexPrice(
   exponentPrice: Decimal,
   prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
   options?: ComputeBiasAdjustedIndexPriceOptions
-): Decimal {
+): { nextIndexPrice: Decimal; delat: Decimal } {
   const symbols = Object.keys(prices);
-  if (symbols.length < 2) return new Decimal(0);
+  if (symbols.length < 2)
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO,
+    };
   const prevSymbols = Object.keys(prevPrices);
-  if (prevSymbols.length < 2) return new Decimal(0);
+  if (prevSymbols.length < 2)
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO,
+    };
 
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
@@ -47,7 +55,10 @@ export function computeBiasAdjustedIndexPrice(
     bbPrice.lte(0) ||
     bbPrevPrice.lte(0)
   ) {
-    return new Decimal(0);
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO,
+    };
   }
 
   // Configs
@@ -61,7 +72,11 @@ export function computeBiasAdjustedIndexPrice(
 
   // Step 2: Weighted combination (AA forward, BB reverse)
   const totalTokenWeight = aaWeight.add(bbWeight);
-  if (totalTokenWeight.eq(0)) return new Decimal(0);
+  if (totalTokenWeight.eq(0))
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO,
+    };
 
   // Step 3: Weighted price return (token delta)
   const tokenDelta = aaWeight
@@ -121,7 +136,10 @@ export function computeBiasAdjustedIndexPrice(
   const indexPriceMultiplier = Decimal.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
 
-  return nextIndexPrice;
+  return {
+    nextIndexPrice,
+    delat: combinedDelta,
+  };
 }
 
 function computeVolatility(deltas: Decimal[]): Decimal {

@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { parseUnits } from "ethers";
 
 export const EXPONENT_DECIMALS = 18;
@@ -12,3 +13,4 @@ export const MIN_PRICE_CHANGE_PPM = 1;
 
 export const TWITTER_VOTE_AMOUNT = 10;
 export const USER_VOTE_AMOUNT = 1;
+export const ZERO = new Decimal(0);

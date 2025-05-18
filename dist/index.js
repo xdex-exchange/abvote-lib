@@ -1445,6 +1445,7 @@ function solidityPackedKeccak256(types, values) {
 }
 
 // src/constants/constants.ts
+import Decimal2 from "decimal.js";
 var EXPONENT_DECIMALS = 18;
 var EXPONENT_HALF_DECIMALS = EXPONENT_DECIMALS / 2;
 var INITIAL_EXPONENT = parseUnits("100000", EXPONENT_DECIMALS);
@@ -1455,6 +1456,7 @@ var ORACLE_PRICE_DECIMAL = 7;
 var MIN_PRICE_CHANGE_PPM = 1;
 var TWITTER_VOTE_AMOUNT = 10;
 var USER_VOTE_AMOUNT = 1;
+var ZERO = new Decimal2(0);
 
 // src/types/types.ts
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
@@ -1470,7 +1472,7 @@ var VotedAB = /* @__PURE__ */ ((VotedAB2) => {
 })(VotedAB || {});
 
 // src/algorithm/exponent.ts
-import Decimal2 from "decimal.js";
+import Decimal3 from "decimal.js";
 var ExponentService = class {
   constructor() {
     this.decimals = EXPONENT_DECIMALS;
@@ -1536,8 +1538,8 @@ var ExponentService = class {
     };
   }
   getExponentPrice() {
-    const exponentA = new Decimal2(this.a.toString());
-    const exponentB = new Decimal2(this.b.toString());
+    const exponentA = new Decimal3(this.a.toString());
+    const exponentB = new Decimal3(this.b.toString());
     return exponentB.div(exponentA);
   }
   serialize() {
@@ -1560,14 +1562,20 @@ var ExponentService = class {
 };
 
 // src/algorithm/indexPrice.ts
-import Decimal3 from "decimal.js";
-function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal3(INITIAL_INDEX_PRICE), options) {
+import Decimal4 from "decimal.js";
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal4(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
-    return new Decimal3(0);
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO
+    };
   const prevSymbols = Object.keys(prevPrices);
   if (prevSymbols.length < 2)
-    return new Decimal3(0);
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO
+    };
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
   const aaPrice = prices[aaSymbol];
@@ -1577,23 +1585,29 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const aaWeight = weights[aaSymbol];
   const bbWeight = weights[bbSymbol];
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
-    return new Decimal3(0);
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO
+    };
   }
-  const tokenWeight = new Decimal3(options?.tokenWeight ?? 0.5);
-  const biasShiftWeight = new Decimal3(options?.biasShiftWeight ?? 0.25);
-  const biasScaleWeight = new Decimal3(options?.biasScaleWeight ?? 0.25);
+  const tokenWeight = new Decimal4(options?.tokenWeight ?? 0.5);
+  const biasShiftWeight = new Decimal4(options?.biasShiftWeight ?? 0.25);
+  const biasScaleWeight = new Decimal4(options?.biasScaleWeight ?? 0.25);
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
   const rB = computeLogReturn(bbPrice, bbPrevPrice);
   const totalTokenWeight = aaWeight.add(bbWeight);
   if (totalTokenWeight.eq(0))
-    return new Decimal3(0);
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO
+    };
   const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalTokenWeight);
   const biasShiftStrengthDelta = exponentPrice.sub(1);
   const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(1));
   let rawCombinedDelta = tokenDelta.mul(tokenWeight).add(biasShiftStrengthDelta.mul(biasShiftWeight)).add(rawBiasScaleDelta.mul(biasScaleWeight));
   const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
-  const dynamicMax = Decimal3.max(recentVolatility.mul(3), new Decimal3(1e-3));
-  let combinedDelta = Decimal3.tanh(rawCombinedDelta.div(dynamicMax)).mul(
+  const dynamicMax = Decimal4.max(recentVolatility.mul(3), new Decimal4(1e-3));
+  let combinedDelta = Decimal4.tanh(rawCombinedDelta.div(dynamicMax)).mul(
     dynamicMax
   );
   if (options?.showLog) {
@@ -1608,7 +1622,7 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
   if (options?.maxDailyPercent && options?.price24hAgo) {
-    const return24h = Decimal3.ln(prevIndexPrice.div(options.price24hAgo));
+    const return24h = Decimal4.ln(prevIndexPrice.div(options.price24hAgo));
     const effectiveDailyDelta = combinedDelta.add(return24h);
     const cappedEffective = tanhClampDelta(
       effectiveDailyDelta,
@@ -1621,14 +1635,17 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
       );
     }
   }
-  const indexPriceMultiplier = Decimal3.exp(combinedDelta);
+  const indexPriceMultiplier = Decimal4.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
-  return nextIndexPrice;
+  return {
+    nextIndexPrice,
+    delat: combinedDelta
+  };
 }
 function computeVolatility(deltas) {
   if (!deltas.length)
-    return new Decimal3(0);
-  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal3(0));
+    return new Decimal4(0);
+  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal4(0));
   return sum.div(deltas.length);
 }
 
@@ -1686,6 +1703,7 @@ export {
   USER_VOTE_AMOUNT,
   VoteSource,
   VotedAB,
+  ZERO,
   computeBiasAdjustedIndexPrice,
   computeLogReturn,
   generateEventHash,

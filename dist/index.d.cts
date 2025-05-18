@@ -77,7 +77,10 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     prevTokenDeltas?: Decimal[];
     showLog?: boolean;
 };
-declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): Decimal;
+declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): {
+    nextIndexPrice: Decimal;
+    delat: Decimal;
+};
 
 declare const getPriceAtomicResolution: (price: number) => number;
 declare const generateEventHash: (eventTag: string, title: string) => string;
@@ -101,5 +104,6 @@ declare const ORACLE_PRICE_DECIMAL = 7;
 declare const MIN_PRICE_CHANGE_PPM = 1;
 declare const TWITTER_VOTE_AMOUNT = 10;
 declare const USER_VOTE_AMOUNT = 1;
+declare const ZERO: Decimal;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_PRICE_CHANGE_PPM, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, computeBiasAdjustedIndexPrice, computeLogReturn, generateEventHash, getMarketParameters, getPriceAtomicResolution, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_PRICE_CHANGE_PPM, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, computeBiasAdjustedIndexPrice, computeLogReturn, generateEventHash, getMarketParameters, getPriceAtomicResolution, tanhClampDelta };
