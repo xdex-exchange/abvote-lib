@@ -16,6 +16,11 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   showLog?: boolean;
 };
 
+export type NextIndex = {
+  nextIndexPrice: Decimal;
+  delat: Decimal;
+};
+
 export function computeBiasAdjustedIndexPrice(
   prices: TokenPriceMap,
   prevPrices: TokenPriceMap,
@@ -23,7 +28,7 @@ export function computeBiasAdjustedIndexPrice(
   exponentPrice: Decimal,
   prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
   options?: ComputeBiasAdjustedIndexPriceOptions
-): { nextIndexPrice: Decimal; delat: Decimal } {
+): NextIndex {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
     return {
