@@ -20,6 +20,13 @@ declare const computeLogReturn: (current: Decimal, previous: Decimal) => Decimal
  */
 declare function tanhClampDelta(delta: Decimal, maxPercent: number): Decimal;
 declare function computeVolatility(deltas: Decimal[]): Decimal;
+declare function applyVolatilityNoiseWithTokenDrivenAmplifier(delta: Decimal, rA: Decimal, rB: Decimal, tokenDelta: Decimal, // 用于方向性惩罚项
+options?: {
+    baseAmplifier?: number;
+    scaleFactor?: number;
+    noiseRange?: number;
+    directionalBiasWeight?: number;
+}): Decimal;
 
 type TokenPriceMap = Record<string, Decimal>;
 type TokenWeightMap = Record<string, Decimal>;
@@ -115,4 +122,4 @@ declare const USER_VOTE_AMOUNT = 1;
 declare const ZERO: Decimal;
 declare const MIN_DYNAMIC: Decimal;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyVolatilityNoiseWithTokenDrivenAmplifier, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
