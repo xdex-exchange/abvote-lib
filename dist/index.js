@@ -44,26 +44,15 @@ function computeVolatility(deltas) {
   const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal(0));
   return sum.div(deltas.length);
 }
-function applyVolatilityNoiseWithTokenDrivenAmplifier(delta, rA, rB, tokenDelta, options) {
-  const baseAmplifier = new Decimal(options?.baseAmplifier ?? 1);
-  const scaleFactor = new Decimal(options?.scaleFactor ?? 5);
-  const noiseRange = options?.noiseRange ?? 0.01;
-  const directionalBiasWeight = new Decimal(
-    options?.directionalBiasWeight ?? 0.3
+function applyFinalAsymmetricNoise(baseMultiplier, tokenDelta, options) {
+  const asymmetryStrength = options?.asymmetryStrength ?? 6e-3;
+  const randomness = options?.randomness ?? 4e-3;
+  const directionalBias = tokenDelta.clamp(-1, 1).mul(asymmetryStrength);
+  const noise = new Decimal(Math.random() * randomness - randomness / 2);
+  const finalMultiplier = baseMultiplier.mul(
+    Decimal.exp(directionalBias.add(noise))
   );
-  const combinedVol = rA.add(rB).div(2);
-  let dynamicAmplifier = baseAmplifier.add(combinedVol.mul(scaleFactor));
-  const directionSign = delta.gte(0) ? 1 : -1;
-  const tokenSign = Decimal.sign(tokenDelta);
-  const directionalBoost = new Decimal(directionSign * tokenSign).mul(
-    directionalBiasWeight
-  );
-  dynamicAmplifier = dynamicAmplifier.add(directionalBoost);
-  const amplified = delta.mul(
-    Decimal.pow(delta.abs().add(1), dynamicAmplifier)
-  );
-  const noise = new Decimal(Math.random() * noiseRange - noiseRange / 2);
-  return amplified.add(noise);
+  return finalMultiplier;
 }
 
 // node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
@@ -1672,13 +1661,11 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
       );
     }
   }
-  combinedDelta = applyVolatilityNoiseWithTokenDrivenAmplifier(
-    combinedDelta,
-    rA,
-    rB,
+  let indexPriceMultiplier = Decimal4.exp(combinedDelta);
+  indexPriceMultiplier = applyFinalAsymmetricNoise(
+    indexPriceMultiplier,
     tokenDelta
   );
-  const indexPriceMultiplier = Decimal4.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return {
     nextIndexPrice,
@@ -1778,7 +1765,7 @@ export {
   VoteSource,
   VotedAB,
   ZERO,
-  applyVolatilityNoiseWithTokenDrivenAmplifier,
+  applyFinalAsymmetricNoise,
   computeBiasAdjustedIndexPrice,
   computeLogReturn,
   computeVolatility,
