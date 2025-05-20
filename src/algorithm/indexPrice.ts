@@ -1,7 +1,7 @@
 // src/lib/indexPrice.ts
 import Decimal from "decimal.js";
 import {
-  applyVolatilityNoiseWithTokenDrivenAmplifier,
+  applyFinalAsymmetricNoise,
   computeLogReturn,
   computeVolatility,
   tanhClampDelta,
@@ -162,15 +162,13 @@ export function computeBiasAdjustedIndexPrice(
     }
   }
 
-  combinedDelta = applyVolatilityNoiseWithTokenDrivenAmplifier(
-    combinedDelta,
-    rA,
-    rB,
+  // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
+  let indexPriceMultiplier = Decimal.exp(combinedDelta);
+
+  indexPriceMultiplier = applyFinalAsymmetricNoise(
+    indexPriceMultiplier,
     tokenDelta
   );
-
-  // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
-  const indexPriceMultiplier = Decimal.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
 
   return {

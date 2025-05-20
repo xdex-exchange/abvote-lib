@@ -37,46 +37,24 @@ export function computeVolatility(deltas: Decimal[]): Decimal {
   return sum.div(deltas.length);
 }
 
-export function applyVolatilityNoiseWithTokenDrivenAmplifier(
-  delta: Decimal,
-  rA: Decimal,
-  rB: Decimal,
-  tokenDelta: Decimal, // 用于方向性惩罚项
+export function applyFinalAsymmetricNoise(
+  baseMultiplier: Decimal,
+  tokenDelta: Decimal,
   options?: {
-    baseAmplifier?: number; // default: 1.0
-    scaleFactor?: number; // default: 5.0
-    noiseRange?: number; // default: 0.01
-    directionalBiasWeight?: number; // default: 0.3
+    asymmetryStrength?: number; // default: 0.005
+    randomness?: number; // default: 0.003
   }
 ): Decimal {
-  const baseAmplifier = new Decimal(options?.baseAmplifier ?? 1.0);
-  const scaleFactor = new Decimal(options?.scaleFactor ?? 5.0);
-  const noiseRange = options?.noiseRange ?? 0.01;
-  const directionalBiasWeight = new Decimal(
-    options?.directionalBiasWeight ?? 0.3
+  const asymmetryStrength = options?.asymmetryStrength ?? 0.006;
+  const randomness = options?.randomness ?? 0.004;
+
+  const directionalBias = tokenDelta.clamp(-1, 1).mul(asymmetryStrength);
+
+  const noise = new Decimal(Math.random() * randomness - randomness / 2);
+
+  const finalMultiplier = baseMultiplier.mul(
+    Decimal.exp(directionalBias.add(noise))
   );
 
-  const combinedVol = rA.add(rB).div(2);
-
-  // Step 2: Adjust amplifier dynamically based on token volatility
-  let dynamicAmplifier = baseAmplifier.add(combinedVol.mul(scaleFactor));
-
-  // Step 3: Directional bias based on tokenDelta
-  const directionSign = delta.gte(0) ? 1 : -1;
-  const tokenSign = Decimal.sign(tokenDelta);
-  const directionalBoost = new Decimal(directionSign * tokenSign).mul(
-    directionalBiasWeight
-  );
-
-  dynamicAmplifier = dynamicAmplifier.add(directionalBoost);
-
-  // Step 4: Amplify delta nonlinearly
-  const amplified = delta.mul(
-    Decimal.pow(delta.abs().add(1), dynamicAmplifier)
-  );
-
-  // Step 5: Add small symmetric noise
-  const noise = new Decimal(Math.random() * noiseRange - noiseRange / 2);
-
-  return amplified.add(noise);
+  return finalMultiplier;
 }
