@@ -45,14 +45,21 @@ function computeVolatility(deltas) {
   return sum.div(deltas.length);
 }
 function applyFinalAsymmetricNoise(baseMultiplier, tokenDelta, options) {
-  const asymmetryStrength = options?.asymmetryStrength ?? 6e-3;
-  const randomness = options?.randomness ?? 4e-3;
+  const asymmetryStrength = options?.asymmetryStrength ?? 0.06;
+  const randomness = options?.randomness ?? 3e-3;
   const directionalBias = tokenDelta.clamp(-1, 1).mul(asymmetryStrength);
   const noise = new Decimal(Math.random() * randomness - randomness / 2);
   const finalMultiplier = baseMultiplier.mul(
     Decimal.exp(directionalBias.add(noise))
   );
   return finalMultiplier;
+}
+function applyVolatilityNoise(delta, options) {
+  const amplifier = new Decimal(options?.volatilityAmplifier ?? 1.115);
+  const noiseRange = options?.noiseRange ?? 0.015;
+  const amplified = delta.mul(Decimal.pow(delta.abs().add(1), amplifier));
+  const noise = new Decimal(Math.random() * noiseRange - noiseRange / 2);
+  return amplified.add(noise);
 }
 
 // node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
@@ -1661,11 +1668,13 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
       );
     }
   }
-  let indexPriceMultiplier = Decimal4.exp(combinedDelta);
-  indexPriceMultiplier = applyFinalAsymmetricNoise(
-    indexPriceMultiplier,
-    tokenDelta
-  );
+  if (options?.volatilityAmplifier && options?.noiseRange) {
+    combinedDelta = applyVolatilityNoise(combinedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange
+    });
+  }
+  const indexPriceMultiplier = Decimal4.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return {
     nextIndexPrice,
@@ -1766,6 +1775,7 @@ export {
   VotedAB,
   ZERO,
   applyFinalAsymmetricNoise,
+  applyVolatilityNoise,
   computeBiasAdjustedIndexPrice,
   computeLogReturn,
   computeVolatility,

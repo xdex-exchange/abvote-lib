@@ -24,6 +24,10 @@ declare function applyFinalAsymmetricNoise(baseMultiplier: Decimal, tokenDelta: 
     asymmetryStrength?: number;
     randomness?: number;
 }): Decimal;
+declare function applyVolatilityNoise(delta: Decimal, options?: {
+    volatilityAmplifier?: number;
+    noiseRange?: number;
+}): Decimal;
 
 type TokenPriceMap = Record<string, Decimal>;
 type TokenWeightMap = Record<string, Decimal>;
@@ -81,6 +85,8 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     biasScaleCapPercent?: number;
     prevTokenDeltas?: Decimal[];
     showLog?: boolean;
+    volatilityAmplifier?: number;
+    noiseRange?: number;
 };
 type NextIndex = {
     nextIndexPrice: Decimal;
@@ -119,4 +125,4 @@ declare const USER_VOTE_AMOUNT = 1;
 declare const ZERO: Decimal;
 declare const MIN_DYNAMIC: Decimal;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyFinalAsymmetricNoise, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyFinalAsymmetricNoise, applyVolatilityNoise, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };

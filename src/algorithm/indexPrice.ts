@@ -2,6 +2,7 @@
 import Decimal from "decimal.js";
 import {
   applyFinalAsymmetricNoise,
+  applyVolatilityNoise,
   computeLogReturn,
   computeVolatility,
   tanhClampDelta,
@@ -24,6 +25,8 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   biasScaleCapPercent?: number; // The maximum amount of increase or decrease that can be zoomed in/out at a time.
   prevTokenDeltas?: Decimal[];
   showLog?: boolean;
+  volatilityAmplifier?: number;
+  noiseRange?: number;
 };
 
 export type NextIndex = {
@@ -162,13 +165,16 @@ export function computeBiasAdjustedIndexPrice(
     }
   }
 
-  // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
-  let indexPriceMultiplier = Decimal.exp(combinedDelta);
+  if (options?.volatilityAmplifier && options?.noiseRange) {
+    combinedDelta = applyVolatilityNoise(combinedDelta, {
+      volatilityAmplifier: options.volatilityAmplifier,
+      noiseRange: options.noiseRange,
+    });
+  }
 
-  indexPriceMultiplier = applyFinalAsymmetricNoise(
-    indexPriceMultiplier,
-    tokenDelta
-  );
+  // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
+  const indexPriceMultiplier = Decimal.exp(combinedDelta);
+
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
 
   return {
