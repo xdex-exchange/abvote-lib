@@ -1,8 +1,13 @@
 // src/lib/indexPrice.ts
 import Decimal from "decimal.js";
-import { computeLogReturn, tanhClampDelta } from "./math";
+import { computeLogReturn, computeVolatility, tanhClampDelta } from "./math";
 import { TokenPriceMap, TokenWeightMap } from "../types/types";
-import { INITIAL_INDEX_PRICE, ZERO } from "../constants/constants";
+import {
+  EXPONENT_INIT,
+  INITIAL_INDEX_PRICE,
+  MIN_DYNAMIC,
+  ZERO,
+} from "../constants/constants";
 
 type ComputeBiasAdjustedIndexPriceOptions = {
   maxDailyPercent?: number; // 24h cumulative maximum fluctuation percentage (e. g. 3 means ± 3%)
@@ -20,6 +25,23 @@ export type NextIndex = {
   nextIndexPrice: Decimal;
   delat: Decimal;
 };
+
+type configOptions = {
+  tokenWeight: Decimal;
+  biasShiftWeight: Decimal;
+  biasScaleWeight: Decimal;
+};
+
+function config(options?: ComputeBiasAdjustedIndexPriceOptions): configOptions {
+  const tokenWeight = new Decimal(options?.tokenWeight ?? 0.5);
+  const biasShiftWeight = new Decimal(options?.biasShiftWeight ?? 0.25);
+  const biasScaleWeight = new Decimal(options?.biasScaleWeight ?? 0.25);
+  return {
+    tokenWeight,
+    biasShiftWeight,
+    biasScaleWeight,
+  };
+}
 
 export function computeBiasAdjustedIndexPrice(
   prices: TokenPriceMap,
@@ -67,9 +89,7 @@ export function computeBiasAdjustedIndexPrice(
   }
 
   // Configs
-  const tokenWeight = new Decimal(options?.tokenWeight ?? 0.5);
-  const biasShiftWeight = new Decimal(options?.biasShiftWeight ?? 0.25);
-  const biasScaleWeight = new Decimal(options?.biasScaleWeight ?? 0.25);
+  const { tokenWeight, biasShiftWeight, biasScaleWeight } = config(options);
 
   // Step 1: Calculate log return
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
@@ -90,10 +110,10 @@ export function computeBiasAdjustedIndexPrice(
     .div(totalTokenWeight);
 
   // === Step 3: BiasShiftDelta → Voting directly drives prices (exponent > 1 drives up,< 1 drives down) ===
-  const biasShiftStrengthDelta = exponentPrice.sub(1); // Both positive and negative can be
+  const biasShiftStrengthDelta = exponentPrice.sub(EXPONENT_INIT); // Both positive and negative can be
 
   // === Step 4: BiasScaleDelta → Vote to zoom in/out on price fluctuations (same direction) ===
-  const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(1));
+  const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(EXPONENT_INIT));
 
   // === Step 5: Combine all effects ===
   let rawCombinedDelta = tokenDelta
@@ -103,7 +123,7 @@ export function computeBiasAdjustedIndexPrice(
 
   // Step 5: Adaptive delta clipping (maxStepPercent removed, based solely on tokenDelta history)
   const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
-  const dynamicMax = Decimal.max(recentVolatility.mul(3), new Decimal(0.001)); // Avoid 0, make sure there is a little sensitivity
+  const dynamicMax = Decimal.max(recentVolatility.mul(3), MIN_DYNAMIC); // Avoid 0, make sure there is a little sensitivity
   let combinedDelta = Decimal.tanh(rawCombinedDelta.div(dynamicMax)).mul(
     dynamicMax
   );
@@ -147,8 +167,61 @@ export function computeBiasAdjustedIndexPrice(
   };
 }
 
-function computeVolatility(deltas: Decimal[]): Decimal {
-  if (!deltas.length) return new Decimal(0);
-  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal(0));
-  return sum.div(deltas.length);
+type PredictedIndexImpact = {
+  predictedIndexPrice: Decimal;
+  deltaPercent: Decimal; // (predicted / prev - 1)
+};
+
+export function predictIndexImpactFromExponentOnly(
+  exponentPrice: Decimal,
+  prevIndexPrice: Decimal,
+  options?: ComputeBiasAdjustedIndexPriceOptions
+): PredictedIndexImpact {
+  // Configs
+  const { biasShiftWeight } = config(options);
+
+  // Step 1: tokenDelta = 0, so rawScale = 0, leaving only the bias shift item
+  const biasShiftStrengthDelta = exponentPrice.sub(EXPONENT_INIT);
+
+  const rawCombinedDelta = biasShiftStrengthDelta.mul(biasShiftWeight); // no scale contribution
+
+  // Step 2: compute dynamicMax based on prevTokenDeltas
+  const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
+  const dynamicMax = Decimal.max(recentVolatility.mul(3), MIN_DYNAMIC); // Avoid 0, make sure there is a little sensitivity
+  let combinedDelta = Decimal.tanh(rawCombinedDelta.div(dynamicMax)).mul(
+    dynamicMax
+  );
+
+  // Step 3: Daily Fluctuation Smoothing Limiting (based on index or token price)
+  if (options?.maxDailyPercent && options?.price24hAgo) {
+    const return24h = Decimal.ln(prevIndexPrice.div(options.price24hAgo));
+    const effectiveDailyDelta = combinedDelta.add(return24h);
+    const cappedEffective = tanhClampDelta(
+      effectiveDailyDelta,
+      options.maxDailyPercent
+    );
+    combinedDelta = cappedEffective.sub(return24h);
+  }
+
+  // Step 4: Apply exp(Δ) to prevIndexPrice
+  const indexPriceMultiplier = Decimal.exp(combinedDelta);
+  const predictedIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
+
+  // Output percentage change and log change
+  const deltaPercent = predictedIndexPrice.div(prevIndexPrice).sub(1); // linear %
+
+  if (options?.showLog) {
+    console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
+    console.log(`rawCombinedDelta: ${rawCombinedDelta.toString()}`);
+    console.log(`recentVolatility: ${recentVolatility.toString()}`);
+    console.log(`dynamicMax: ${dynamicMax.toString()}`);
+    console.log(`combinedDelta: ${combinedDelta.toString()}`);
+    console.log(`indexPriceMultiplier: ${indexPriceMultiplier.toString()}`);
+    console.log(`deltaPercent: ${deltaPercent.toString()}`);
+  }
+
+  return {
+    predictedIndexPrice,
+    deltaPercent,
+  };
 }

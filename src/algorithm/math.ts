@@ -30,3 +30,9 @@ export function tanhClampDelta(delta: Decimal, maxPercent: number): Decimal {
   //  tanh(delta / maxDelta) ∈ [-1, 1]，Multiplyback maxDelta after range ∈ [-maxDelta, +maxDelta]
   return Decimal.tanh(delta.div(maxDelta)).mul(maxDelta);
 }
+
+export function computeVolatility(deltas: Decimal[]): Decimal {
+  if (!deltas.length) return new Decimal(0);
+  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal(0));
+  return sum.div(deltas.length);
+}

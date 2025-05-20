@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import { parseUnits } from "ethers";
 
+export const EXPONENT_INIT = 1;
 export const EXPONENT_DECIMALS = 18;
 export const EXPONENT_HALF_DECIMALS = EXPONENT_DECIMALS / 2;
 export const INITIAL_EXPONENT = parseUnits("100000", EXPONENT_DECIMALS);
@@ -14,3 +15,5 @@ export const MIN_PRICE_CHANGE_PPM = 1;
 export const TWITTER_VOTE_AMOUNT = 10;
 export const USER_VOTE_AMOUNT = 1;
 export const ZERO = new Decimal(0);
+
+export const MIN_DYNAMIC = new Decimal(0.001);

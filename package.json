@@ -18,7 +18,8 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
-    "test": "vitest"
+    "test": "vitest",
+    "testPredict": "vitest test/predictIndex.test.ts"
   },
   "devDependencies": {
     "ethers": "^6.13.5",

@@ -59,11 +59,13 @@ var src_exports = {};
 __export(src_exports, {
   EXPONENT_DECIMALS: () => EXPONENT_DECIMALS,
   EXPONENT_HALF_DECIMALS: () => EXPONENT_HALF_DECIMALS,
+  EXPONENT_INIT: () => EXPONENT_INIT,
   ExponentService: () => ExponentService,
   INITIAL_EXPONENT: () => INITIAL_EXPONENT,
   INITIAL_EXPONENT_WC: () => INITIAL_EXPONENT_WC,
   INITIAL_EXPONENT_WT: () => INITIAL_EXPONENT_WT,
   INITIAL_INDEX_PRICE: () => INITIAL_INDEX_PRICE,
+  MIN_DYNAMIC: () => MIN_DYNAMIC,
   MIN_PRICE_CHANGE_PPM: () => MIN_PRICE_CHANGE_PPM,
   ORACLE_PRICE_DECIMAL: () => ORACLE_PRICE_DECIMAL,
   TWITTER_VOTE_AMOUNT: () => TWITTER_VOTE_AMOUNT,
@@ -73,9 +75,11 @@ __export(src_exports, {
   ZERO: () => ZERO,
   computeBiasAdjustedIndexPrice: () => computeBiasAdjustedIndexPrice,
   computeLogReturn: () => computeLogReturn,
+  computeVolatility: () => computeVolatility,
   generateEventHash: () => generateEventHash,
   getMarketParameters: () => getMarketParameters,
   getPriceAtomicResolution: () => getPriceAtomicResolution,
+  predictIndexImpactFromExponentOnly: () => predictIndexImpactFromExponentOnly,
   tanhClampDelta: () => tanhClampDelta
 });
 module.exports = __toCommonJS(src_exports);
@@ -90,6 +94,12 @@ var computeLogReturn = (current, previous) => {
 function tanhClampDelta(delta, maxPercent) {
   const maxDelta = import_decimal.default.ln(1 + maxPercent / 100);
   return import_decimal.default.tanh(delta.div(maxDelta)).mul(maxDelta);
+}
+function computeVolatility(deltas) {
+  if (!deltas.length)
+    return new import_decimal.default(0);
+  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new import_decimal.default(0));
+  return sum.div(deltas.length);
 }
 
 // node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
@@ -1499,6 +1509,7 @@ function solidityPackedKeccak256(types, values) {
 
 // src/constants/constants.ts
 var import_decimal2 = __toESM(require("decimal.js"), 1);
+var EXPONENT_INIT = 1;
 var EXPONENT_DECIMALS = 18;
 var EXPONENT_HALF_DECIMALS = EXPONENT_DECIMALS / 2;
 var INITIAL_EXPONENT = parseUnits("100000", EXPONENT_DECIMALS);
@@ -1510,6 +1521,7 @@ var MIN_PRICE_CHANGE_PPM = 1;
 var TWITTER_VOTE_AMOUNT = 10;
 var USER_VOTE_AMOUNT = 1;
 var ZERO = new import_decimal2.default(0);
+var MIN_DYNAMIC = new import_decimal2.default(1e-3);
 
 // src/types/types.ts
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
@@ -1616,6 +1628,16 @@ var ExponentService = class {
 
 // src/algorithm/indexPrice.ts
 var import_decimal4 = __toESM(require("decimal.js"), 1);
+function config(options) {
+  const tokenWeight = new import_decimal4.default(options?.tokenWeight ?? 0.5);
+  const biasShiftWeight = new import_decimal4.default(options?.biasShiftWeight ?? 0.25);
+  const biasScaleWeight = new import_decimal4.default(options?.biasScaleWeight ?? 0.25);
+  return {
+    tokenWeight,
+    biasShiftWeight,
+    biasScaleWeight
+  };
+}
 function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal4.default(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
@@ -1643,9 +1665,7 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
       delat: ZERO
     };
   }
-  const tokenWeight = new import_decimal4.default(options?.tokenWeight ?? 0.5);
-  const biasShiftWeight = new import_decimal4.default(options?.biasShiftWeight ?? 0.25);
-  const biasScaleWeight = new import_decimal4.default(options?.biasScaleWeight ?? 0.25);
+  const { tokenWeight, biasShiftWeight, biasScaleWeight } = config(options);
   const rA = computeLogReturn(aaPrice, aaPrevPrice);
   const rB = computeLogReturn(bbPrice, bbPrevPrice);
   const totalTokenWeight = aaWeight.add(bbWeight);
@@ -1655,11 +1675,11 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
       delat: ZERO
     };
   const tokenDelta = aaWeight.mul(rA).sub(bbWeight.mul(rB)).div(totalTokenWeight);
-  const biasShiftStrengthDelta = exponentPrice.sub(1);
-  const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(1));
+  const biasShiftStrengthDelta = exponentPrice.sub(EXPONENT_INIT);
+  const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(EXPONENT_INIT));
   let rawCombinedDelta = tokenDelta.mul(tokenWeight).add(biasShiftStrengthDelta.mul(biasShiftWeight)).add(rawBiasScaleDelta.mul(biasScaleWeight));
   const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
-  const dynamicMax = import_decimal4.default.max(recentVolatility.mul(3), new import_decimal4.default(1e-3));
+  const dynamicMax = import_decimal4.default.max(recentVolatility.mul(3), MIN_DYNAMIC);
   let combinedDelta = import_decimal4.default.tanh(rawCombinedDelta.div(dynamicMax)).mul(
     dynamicMax
   );
@@ -1695,11 +1715,40 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     delat: combinedDelta
   };
 }
-function computeVolatility(deltas) {
-  if (!deltas.length)
-    return new import_decimal4.default(0);
-  const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new import_decimal4.default(0));
-  return sum.div(deltas.length);
+function predictIndexImpactFromExponentOnly(exponentPrice, prevIndexPrice, options) {
+  const { biasShiftWeight } = config(options);
+  const biasShiftStrengthDelta = exponentPrice.sub(EXPONENT_INIT);
+  const rawCombinedDelta = biasShiftStrengthDelta.mul(biasShiftWeight);
+  const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
+  const dynamicMax = import_decimal4.default.max(recentVolatility.mul(3), MIN_DYNAMIC);
+  let combinedDelta = import_decimal4.default.tanh(rawCombinedDelta.div(dynamicMax)).mul(
+    dynamicMax
+  );
+  if (options?.maxDailyPercent && options?.price24hAgo) {
+    const return24h = import_decimal4.default.ln(prevIndexPrice.div(options.price24hAgo));
+    const effectiveDailyDelta = combinedDelta.add(return24h);
+    const cappedEffective = tanhClampDelta(
+      effectiveDailyDelta,
+      options.maxDailyPercent
+    );
+    combinedDelta = cappedEffective.sub(return24h);
+  }
+  const indexPriceMultiplier = import_decimal4.default.exp(combinedDelta);
+  const predictedIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
+  const deltaPercent = predictedIndexPrice.div(prevIndexPrice).sub(1);
+  if (options?.showLog) {
+    console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
+    console.log(`rawCombinedDelta: ${rawCombinedDelta.toString()}`);
+    console.log(`recentVolatility: ${recentVolatility.toString()}`);
+    console.log(`dynamicMax: ${dynamicMax.toString()}`);
+    console.log(`combinedDelta: ${combinedDelta.toString()}`);
+    console.log(`indexPriceMultiplier: ${indexPriceMultiplier.toString()}`);
+    console.log(`deltaPercent: ${deltaPercent.toString()}`);
+  }
+  return {
+    predictedIndexPrice,
+    deltaPercent
+  };
 }
 
 // src/algorithm/oracle.ts
@@ -1746,11 +1795,13 @@ var getMarketParameters = (ticker, price) => {
 0 && (module.exports = {
   EXPONENT_DECIMALS,
   EXPONENT_HALF_DECIMALS,
+  EXPONENT_INIT,
   ExponentService,
   INITIAL_EXPONENT,
   INITIAL_EXPONENT_WC,
   INITIAL_EXPONENT_WT,
   INITIAL_INDEX_PRICE,
+  MIN_DYNAMIC,
   MIN_PRICE_CHANGE_PPM,
   ORACLE_PRICE_DECIMAL,
   TWITTER_VOTE_AMOUNT,
@@ -1760,9 +1811,11 @@ var getMarketParameters = (ticker, price) => {
   ZERO,
   computeBiasAdjustedIndexPrice,
   computeLogReturn,
+  computeVolatility,
   generateEventHash,
   getMarketParameters,
   getPriceAtomicResolution,
+  predictIndexImpactFromExponentOnly,
   tanhClampDelta
 });
 /*! Bundled license information:

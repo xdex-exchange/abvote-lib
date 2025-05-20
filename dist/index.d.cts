@@ -19,6 +19,7 @@ declare const computeLogReturn: (current: Decimal, previous: Decimal) => Decimal
  * @returns Δ after smoothing
  */
 declare function tanhClampDelta(delta: Decimal, maxPercent: number): Decimal;
+declare function computeVolatility(deltas: Decimal[]): Decimal;
 
 type TokenPriceMap = Record<string, Decimal>;
 type TokenWeightMap = Record<string, Decimal>;
@@ -82,6 +83,11 @@ type NextIndex = {
     delat: Decimal;
 };
 declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): NextIndex;
+type PredictedIndexImpact = {
+    predictedIndexPrice: Decimal;
+    deltaPercent: Decimal;
+};
+declare function predictIndexImpactFromExponentOnly(exponentPrice: Decimal, prevIndexPrice: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): PredictedIndexImpact;
 
 declare const getPriceAtomicResolution: (price: number) => number;
 declare const generateEventHash: (eventTag: string, title: string) => string;
@@ -95,6 +101,7 @@ declare const getMarketParameters: (ticker: string, price: string) => {
     subticksPerTick: number;
 };
 
+declare const EXPONENT_INIT = 1;
 declare const EXPONENT_DECIMALS = 18;
 declare const EXPONENT_HALF_DECIMALS: number;
 declare const INITIAL_EXPONENT: bigint;
@@ -106,5 +113,6 @@ declare const MIN_PRICE_CHANGE_PPM = 1;
 declare const TWITTER_VOTE_AMOUNT = 10;
 declare const USER_VOTE_AMOUNT = 1;
 declare const ZERO: Decimal;
+declare const MIN_DYNAMIC: Decimal;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, computeBiasAdjustedIndexPrice, computeLogReturn, generateEventHash, getMarketParameters, getPriceAtomicResolution, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
