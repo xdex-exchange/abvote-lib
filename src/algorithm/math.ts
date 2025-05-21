@@ -77,3 +77,42 @@ export function applyVolatilityNoise(
 
   return amplified.add(noise);
 }
+
+type InertiaOptions = {
+  prevDeltas: Decimal[];
+  inertiaStrength?: Decimal;
+  reversalResistance?: Decimal;
+  memoryDepth?: number;
+};
+
+export function applyInertiaAndResistance(
+  rawCombinedDelta: Decimal,
+  options: InertiaOptions
+): Decimal {
+  const {
+    prevDeltas,
+    inertiaStrength,
+    reversalResistance,
+    memoryDepth = 5,
+  } = options;
+
+  if (prevDeltas.length === 0) return rawCombinedDelta;
+
+  const recent = prevDeltas.slice(-memoryDepth);
+  const trendMemory = recent
+    .reduce((sum, d) => sum.add(d), new Decimal(0))
+    .div(recent.length);
+
+  const directionSame = trendMemory.mul(rawCombinedDelta).gte(0);
+  let directionFactor: Decimal;
+
+  if (directionSame) {
+    const inertiaDelta = trendMemory.mul(inertiaStrength ?? 3);
+    directionFactor = Decimal.exp(inertiaDelta);
+  } else {
+    const resistanceDelta = trendMemory.abs().mul(reversalResistance ?? 2.5);
+    directionFactor = Decimal.exp(resistanceDelta.neg());
+  }
+
+  return rawCombinedDelta.mul(directionFactor);
+}

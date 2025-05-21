@@ -28,6 +28,13 @@ declare function applyVolatilityNoise(delta: Decimal, options?: {
     volatilityAmplifier?: number;
     noiseRange?: number;
 }): Decimal;
+type InertiaOptions = {
+    prevDeltas: Decimal[];
+    inertiaStrength?: Decimal;
+    reversalResistance?: Decimal;
+    memoryDepth?: number;
+};
+declare function applyInertiaAndResistance(rawCombinedDelta: Decimal, options: InertiaOptions): Decimal;
 
 type TokenPriceMap = Record<string, Decimal>;
 type TokenWeightMap = Record<string, Decimal>;
@@ -87,6 +94,8 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     showLog?: boolean;
     volatilityAmplifier?: number;
     noiseRange?: number;
+    inertiaStrength?: Decimal;
+    reversalResistance?: Decimal;
 };
 type NextIndex = {
     nextIndexPrice: Decimal;
@@ -125,4 +134,4 @@ declare const USER_VOTE_AMOUNT = 1;
 declare const ZERO: Decimal;
 declare const MIN_DYNAMIC: Decimal;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyFinalAsymmetricNoise, applyVolatilityNoise, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyFinalAsymmetricNoise, applyInertiaAndResistance, applyVolatilityNoise, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };

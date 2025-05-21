@@ -2,6 +2,7 @@
 import Decimal from "decimal.js";
 import {
   applyFinalAsymmetricNoise,
+  applyInertiaAndResistance,
   applyVolatilityNoise,
   computeLogReturn,
   computeVolatility,
@@ -27,6 +28,8 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   showLog?: boolean;
   volatilityAmplifier?: number;
   noiseRange?: number;
+  inertiaStrength?: Decimal;
+  reversalResistance?: Decimal;
 };
 
 export type NextIndex = {
@@ -137,6 +140,16 @@ export function computeBiasAdjustedIndexPrice(
   );
 
   if (options?.showLog) {
+    console.log(`combinedDelta: ${combinedDelta.toString()}`);
+  }
+  combinedDelta = applyInertiaAndResistance(combinedDelta, {
+    prevDeltas: options?.prevTokenDeltas ?? [],
+    inertiaStrength: options?.inertiaStrength ?? new Decimal(3),
+    reversalResistance: options?.reversalResistance ?? new Decimal(5),
+    memoryDepth: 5,
+  });
+
+  if (options?.showLog) {
     console.log(`rA:${rA.toString()}`);
     console.log(`rB:${rB.toString()}`);
     console.log(`tokenDelta: ${tokenDelta.toString()}`);
@@ -165,12 +178,12 @@ export function computeBiasAdjustedIndexPrice(
     }
   }
 
-  if (options?.volatilityAmplifier && options?.noiseRange) {
-    combinedDelta = applyVolatilityNoise(combinedDelta, {
-      volatilityAmplifier: options.volatilityAmplifier,
-      noiseRange: options.noiseRange,
-    });
-  }
+  // if (options?.volatilityAmplifier && options?.noiseRange) {
+  //   combinedDelta = applyVolatilityNoise(combinedDelta, {
+  //     volatilityAmplifier: options.volatilityAmplifier,
+  //     noiseRange: options.noiseRange,
+  //   });
+  // }
 
   // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
   const indexPriceMultiplier = Decimal.exp(combinedDelta);
