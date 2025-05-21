@@ -162,21 +162,21 @@ export function computeBiasAdjustedIndexPrice(
   }
 
   // Step 5.3: Daily Fluctuation Smoothing Limiting (based on index or token price)
-  if (options?.maxDailyPercent && options?.price24hAgo) {
-    const return24h = Decimal.ln(prevIndexPrice.div(options.price24hAgo));
-    const effectiveDailyDelta = combinedDelta.add(return24h);
-    const cappedEffective = tanhClampDelta(
-      effectiveDailyDelta,
-      options.maxDailyPercent
-    );
-    combinedDelta = cappedEffective.sub(return24h);
+  // if (options?.maxDailyPercent && options?.price24hAgo) {
+  //   const return24h = Decimal.ln(prevIndexPrice.div(options.price24hAgo));
+  //   const effectiveDailyDelta = combinedDelta.add(return24h);
+  //   const cappedEffective = tanhClampDelta(
+  //     effectiveDailyDelta,
+  //     options.maxDailyPercent
+  //   );
+  //   combinedDelta = cappedEffective.sub(return24h);
 
-    if (options?.showLog) {
-      console.log(
-        `Daily combinedDelta:${combinedDelta.toString()}, return24h:${return24h.toString()}, effectiveDailyDelta:${effectiveDailyDelta.toString()}, cappedEffective:${cappedEffective.toString()}`
-      );
-    }
-  }
+  //   if (options?.showLog) {
+  //     console.log(
+  //       `Daily combinedDelta:${combinedDelta.toString()}, return24h:${return24h.toString()}, effectiveDailyDelta:${effectiveDailyDelta.toString()}, cappedEffective:${cappedEffective.toString()}`
+  //     );
+  //   }
+  // }
 
   // if (options?.volatilityAmplifier && options?.noiseRange) {
   //   combinedDelta = applyVolatilityNoise(combinedDelta, {

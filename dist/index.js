@@ -1685,20 +1685,6 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     console.log(`dynamicMax: ${dynamicMax.toString()}`);
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
-  if (options?.maxDailyPercent && options?.price24hAgo) {
-    const return24h = Decimal4.ln(prevIndexPrice.div(options.price24hAgo));
-    const effectiveDailyDelta = combinedDelta.add(return24h);
-    const cappedEffective = tanhClampDelta(
-      effectiveDailyDelta,
-      options.maxDailyPercent
-    );
-    combinedDelta = cappedEffective.sub(return24h);
-    if (options?.showLog) {
-      console.log(
-        `Daily combinedDelta:${combinedDelta.toString()}, return24h:${return24h.toString()}, effectiveDailyDelta:${effectiveDailyDelta.toString()}, cappedEffective:${cappedEffective.toString()}`
-      );
-    }
-  }
   const indexPriceMultiplier = Decimal4.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   return {
