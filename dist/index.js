@@ -75,7 +75,7 @@ function applyInertiaAndResistance(rawCombinedDelta, options) {
   const directionSame = trendMemory.mul(rawCombinedDelta).gte(0);
   let directionFactor;
   if (directionSame) {
-    const inertiaDelta = trendMemory.mul(inertiaStrength ?? 3);
+    const inertiaDelta = trendMemory.abs().mul(inertiaStrength ?? 3);
     directionFactor = Decimal.exp(inertiaDelta);
   } else {
     const resistanceDelta = trendMemory.abs().mul(reversalResistance ?? 2.5);

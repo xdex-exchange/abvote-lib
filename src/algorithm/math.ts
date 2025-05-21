@@ -107,7 +107,7 @@ export function applyInertiaAndResistance(
   let directionFactor: Decimal;
 
   if (directionSame) {
-    const inertiaDelta = trendMemory.mul(inertiaStrength ?? 3);
+    const inertiaDelta = trendMemory.abs().mul(inertiaStrength ?? 3);
     directionFactor = Decimal.exp(inertiaDelta);
   } else {
     const resistanceDelta = trendMemory.abs().mul(reversalResistance ?? 2.5);

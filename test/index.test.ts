@@ -1,29 +1,20 @@
 import { describe, it, expect } from "vitest";
-import {
-  applyFinalAsymmetricNoise,
-  applyInertiaAndResistance,
-  applyVolatilityNoise,
-  computeLogReturn,
-} from "../src";
+import { applyInertiaAndResistance } from "../src";
 import Decimal from "decimal.js";
 
-function testApplyInertiaAndResistance() {
-  const rawDeltaUp = new Decimal("0.02");
-  const rawDeltaDown = new Decimal("-0.02");
+const inertiaStrength = 10;
+const reversalResistance = 10;
 
-  const prevDeltasUp = [
-    new Decimal("0.01"),
-    new Decimal("0.015"),
-    new Decimal("0.02"),
-    new Decimal("0.025"),
-    new Decimal("0.03"),
-  ];
-
+function testApplyInertiaAndResistance(
+  prevDeltasUp: Decimal[],
+  rawDeltaUp: Decimal,
+  rawDeltaDown: Decimal
+) {
   console.log("== Test trend rises in unison ==");
   const result1 = applyInertiaAndResistance(rawDeltaUp, {
     prevDeltas: prevDeltasUp,
-    inertiaStrength: new Decimal(3),
-    reversalResistance: new Decimal(2),
+    inertiaStrength: new Decimal(inertiaStrength),
+    reversalResistance: new Decimal(reversalResistance),
     memoryDepth: 5,
   });
   console.log("rawDeltaUp:", rawDeltaUp.toString());
@@ -32,8 +23,8 @@ function testApplyInertiaAndResistance() {
   console.log("\n== Test trend reversal down ==");
   const result2 = applyInertiaAndResistance(rawDeltaDown, {
     prevDeltas: prevDeltasUp,
-    inertiaStrength: new Decimal(3),
-    reversalResistance: new Decimal(5),
+    inertiaStrength: new Decimal(inertiaStrength),
+    reversalResistance: new Decimal(reversalResistance),
     memoryDepth: 5,
   });
   console.log("rawDeltaDown:", rawDeltaDown.toString());
@@ -42,6 +33,31 @@ function testApplyInertiaAndResistance() {
 
 describe("math utils", () => {
   it("should compute log return correctly", () => {
-    testApplyInertiaAndResistance();
+    {
+      const rawDeltaUp = new Decimal("0.02");
+      const rawDeltaDown = new Decimal("-0.02");
+
+      const prevDeltasUp = [
+        new Decimal("-0.011"),
+        new Decimal("-0.015"),
+        new Decimal("-0.02"),
+        new Decimal("-0.025"),
+        new Decimal("-0.03"),
+      ];
+      testApplyInertiaAndResistance(prevDeltasUp, rawDeltaUp, rawDeltaDown);
+    }
+    {
+      const rawDeltaUp = new Decimal("0.02");
+      const rawDeltaDown = new Decimal("-0.02");
+
+      const prevDeltasUp = [
+        new Decimal("0.011"),
+        new Decimal("0.015"),
+        new Decimal("0.02"),
+        new Decimal("0.025"),
+        new Decimal("0.03"),
+      ];
+      testApplyInertiaAndResistance(prevDeltasUp, rawDeltaUp, rawDeltaDown);
+    }
   });
 });
