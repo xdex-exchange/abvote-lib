@@ -28,8 +28,8 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   showLog?: boolean;
   volatilityAmplifier?: number;
   noiseRange?: number;
-  inertiaStrength?: Decimal;
-  reversalResistance?: Decimal;
+  inertiaStrength?: number;
+  reversalResistance?: number;
 };
 
 export type NextIndex = {
@@ -144,9 +144,9 @@ export function computeBiasAdjustedIndexPrice(
   }
   combinedDelta = applyInertiaAndResistance(combinedDelta, {
     prevDeltas: options?.prevTokenDeltas ?? [],
-    inertiaStrength: options?.inertiaStrength ?? new Decimal(3),
-    reversalResistance: options?.reversalResistance ?? new Decimal(5),
-    memoryDepth: 5,
+    inertiaStrength: new Decimal(options?.inertiaStrength ?? 3),
+    reversalResistance: new Decimal(options?.reversalResistance ?? 5),
+    memoryDepth: options?.prevTokenDeltas?.length ?? 5,
   });
 
   if (options?.showLog) {

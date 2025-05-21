@@ -80,21 +80,17 @@ export function applyVolatilityNoise(
 
 type InertiaOptions = {
   prevDeltas: Decimal[];
-  inertiaStrength?: Decimal;
-  reversalResistance?: Decimal;
-  memoryDepth?: number;
+  inertiaStrength: Decimal;
+  reversalResistance: Decimal;
+  memoryDepth: number;
 };
 
 export function applyInertiaAndResistance(
   rawCombinedDelta: Decimal,
   options: InertiaOptions
 ): Decimal {
-  const {
-    prevDeltas,
-    inertiaStrength,
-    reversalResistance,
-    memoryDepth = 5,
-  } = options;
+  const { prevDeltas, inertiaStrength, reversalResistance, memoryDepth } =
+    options;
 
   if (prevDeltas.length === 0) return rawCombinedDelta;
 
@@ -103,14 +99,16 @@ export function applyInertiaAndResistance(
     .reduce((sum, d) => sum.add(d), new Decimal(0))
     .div(recent.length);
 
+  console.log("trendMemory", trendMemory);
+
   const directionSame = trendMemory.mul(rawCombinedDelta).gte(0);
   let directionFactor: Decimal;
 
   if (directionSame) {
-    const inertiaDelta = trendMemory.abs().mul(inertiaStrength ?? 3);
+    const inertiaDelta = trendMemory.abs().mul(inertiaStrength);
     directionFactor = Decimal.exp(inertiaDelta);
   } else {
-    const resistanceDelta = trendMemory.abs().mul(reversalResistance ?? 2.5);
+    const resistanceDelta = trendMemory.abs().mul(reversalResistance);
     directionFactor = Decimal.exp(resistanceDelta.neg());
   }
 

@@ -62,23 +62,19 @@ function applyVolatilityNoise(delta, options) {
   return amplified.add(noise);
 }
 function applyInertiaAndResistance(rawCombinedDelta, options) {
-  const {
-    prevDeltas,
-    inertiaStrength,
-    reversalResistance,
-    memoryDepth = 5
-  } = options;
+  const { prevDeltas, inertiaStrength, reversalResistance, memoryDepth } = options;
   if (prevDeltas.length === 0)
     return rawCombinedDelta;
   const recent = prevDeltas.slice(-memoryDepth);
   const trendMemory = recent.reduce((sum, d) => sum.add(d), new Decimal(0)).div(recent.length);
+  console.log("trendMemory", trendMemory);
   const directionSame = trendMemory.mul(rawCombinedDelta).gte(0);
   let directionFactor;
   if (directionSame) {
-    const inertiaDelta = trendMemory.abs().mul(inertiaStrength ?? 3);
+    const inertiaDelta = trendMemory.abs().mul(inertiaStrength);
     directionFactor = Decimal.exp(inertiaDelta);
   } else {
-    const resistanceDelta = trendMemory.abs().mul(reversalResistance ?? 2.5);
+    const resistanceDelta = trendMemory.abs().mul(reversalResistance);
     directionFactor = Decimal.exp(resistanceDelta.neg());
   }
   return rawCombinedDelta.mul(directionFactor);
@@ -1670,9 +1666,9 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   }
   combinedDelta = applyInertiaAndResistance(combinedDelta, {
     prevDeltas: options?.prevTokenDeltas ?? [],
-    inertiaStrength: options?.inertiaStrength ?? new Decimal4(3),
-    reversalResistance: options?.reversalResistance ?? new Decimal4(5),
-    memoryDepth: 5
+    inertiaStrength: new Decimal4(options?.inertiaStrength ?? 3),
+    reversalResistance: new Decimal4(options?.reversalResistance ?? 5),
+    memoryDepth: options?.prevTokenDeltas?.length ?? 5
   });
   if (options?.showLog) {
     console.log(`rA:${rA.toString()}`);

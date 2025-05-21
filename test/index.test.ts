@@ -3,7 +3,7 @@ import { applyInertiaAndResistance } from "../src";
 import Decimal from "decimal.js";
 
 const inertiaStrength = 10;
-const reversalResistance = 10;
+const reversalResistance = 35;
 
 function testApplyInertiaAndResistance(
   prevDeltasUp: Decimal[],
@@ -35,14 +35,14 @@ describe("math utils", () => {
   it("should compute log return correctly", () => {
     {
       const rawDeltaUp = new Decimal("0.02");
-      const rawDeltaDown = new Decimal("-0.02");
+      const rawDeltaDown = new Decimal("-0.061370001393850021745");
 
       const prevDeltasUp = [
-        new Decimal("-0.011"),
-        new Decimal("-0.015"),
-        new Decimal("-0.02"),
-        new Decimal("-0.025"),
-        new Decimal("-0.03"),
+        new Decimal("-0.017919198934148586477"),
+        new Decimal("0.0042620134768052626305"),
+        new Decimal("0.061041512185861635036"),
+        new Decimal("-0.066141306024280737878"),
+        new Decimal("-0.017157377162207816192"),
       ];
       testApplyInertiaAndResistance(prevDeltasUp, rawDeltaUp, rawDeltaDown);
     }

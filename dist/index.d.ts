@@ -30,9 +30,9 @@ declare function applyVolatilityNoise(delta: Decimal, options?: {
 }): Decimal;
 type InertiaOptions = {
     prevDeltas: Decimal[];
-    inertiaStrength?: Decimal;
-    reversalResistance?: Decimal;
-    memoryDepth?: number;
+    inertiaStrength: Decimal;
+    reversalResistance: Decimal;
+    memoryDepth: number;
 };
 declare function applyInertiaAndResistance(rawCombinedDelta: Decimal, options: InertiaOptions): Decimal;
 
@@ -94,8 +94,8 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     showLog?: boolean;
     volatilityAmplifier?: number;
     noiseRange?: number;
-    inertiaStrength?: Decimal;
-    reversalResistance?: Decimal;
+    inertiaStrength?: number;
+    reversalResistance?: number;
 };
 type NextIndex = {
     nextIndexPrice: Decimal;
