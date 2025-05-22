@@ -1,5 +1,10 @@
 import Decimal from "decimal.js";
-import { predictIndexImpactFromExponentOnly } from "../src";
+import {
+  ExponentService,
+  predictIndexImpactFromExponentOnly,
+  VotedAB,
+  VoteSource,
+} from "../src";
 import { describe, it } from "vitest";
 
 function testPredictIndexImpact() {
@@ -47,5 +52,35 @@ function testPredictIndexImpact() {
 describe("predict utils", () => {
   it("predict index from exponent", () => {
     testPredictIndexImpact();
+  });
+  it("predict index from exponent", () => {
+    const prevIndexPrice = new Decimal("0.005079775510208490099");
+    const price24hAgo = new Decimal("0.0050829437880038297502");
+
+    const options = {
+      maxDailyPercent: 50,
+      price24hAgo,
+      prevTokenDeltas: [
+        new Decimal("-0.043938655308389717227"),
+        new Decimal("-0.018281412807738909623"),
+        new Decimal("0.0094312860159767609877"),
+        new Decimal("0.029325543555792175065"),
+        new Decimal("-0.011316175012344287543"),
+      ],
+      showLog: true,
+    };
+    const exponentService = new ExponentService();
+    exponentService.computeExponent(30, VoteSource.USER, VotedAB.A);
+    const ex = exponentService.getExponent();
+    const b = new Decimal(ex.b.toString());
+    const a = new Decimal(ex.a.toString());
+    const exponentPrice = b.div(a);
+    const weightedExponentPrice = exponentPrice.mul(new Decimal(1));
+    const result = predictIndexImpactFromExponentOnly(
+      weightedExponentPrice,
+      prevIndexPrice,
+      options
+    );
+    console.log(`deltaPercent: ${result.deltaPercent.mul(100).toFixed(4)}%`);
   });
 });

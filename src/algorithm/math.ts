@@ -37,80 +37,63 @@ export function computeVolatility(deltas: Decimal[]): Decimal {
   return sum.div(deltas.length);
 }
 
-export function applyFinalAsymmetricNoise(
-  baseMultiplier: Decimal,
-  tokenDelta: Decimal,
-  options?: {
-    asymmetryStrength?: number; // default: 0.005
-    randomness?: number; // default: 0.003
-  }
-): Decimal {
-  const asymmetryStrength = options?.asymmetryStrength ?? 0.06;
-  const randomness = options?.randomness ?? 0.003;
-
-  const directionalBias = tokenDelta.clamp(-1, 1).mul(asymmetryStrength);
-
-  const noise = new Decimal(Math.random() * randomness - randomness / 2);
-
-  const finalMultiplier = baseMultiplier.mul(
-    Decimal.exp(directionalBias.add(noise))
-  );
-
-  return finalMultiplier;
-}
-
-export function applyVolatilityNoise(
-  delta: Decimal,
-  options?: {
-    volatilityAmplifier?: number; // default: 1.2
-    noiseRange?: number; // default: 0.002
-  }
-): Decimal {
-  const amplifier = new Decimal(options?.volatilityAmplifier ?? 1.115);
-  const noiseRange = options?.noiseRange ?? 0.015;
-
-  // Step 1: Amplify based on the absolute value of delta
-  const amplified = delta.mul(Decimal.pow(delta.abs().add(1), amplifier));
-
-  // Step 2: Add small noise
-  const noise = new Decimal(Math.random() * noiseRange - noiseRange / 2);
-
-  return amplified.add(noise);
-}
-
-type InertiaOptions = {
-  prevDeltas: Decimal[];
-  inertiaStrength: Decimal;
-  reversalResistance: Decimal;
-  memoryDepth: number;
+export type InertiaOptions = {
+  maxFactor?: number; // default: 3
+  minFactor?: number; // default: 1 / 3
+  inertiaStrength?: Decimal;
+  reversalResistance?: Decimal;
 };
 
-export function applyInertiaAndResistance(
+const MAX_FACTOR = new Decimal(3);
+const MIN_FACTOR = new Decimal(0.01);
+const DEFAULT_INERTIA_STRENGTH = new Decimal(10);
+const DEFAULT_REVERSAL_RESISTANCE = new Decimal(35);
+
+export function applyInertiaAndResistanceWithClamp(
   rawCombinedDelta: Decimal,
+  prevDeltas: Decimal[],
+  memoryDepth: number,
   options: InertiaOptions
 ): Decimal {
-  const { prevDeltas, inertiaStrength, reversalResistance, memoryDepth } =
-    options;
+  const { maxFactor, minFactor, inertiaStrength, reversalResistance } = options;
 
   if (prevDeltas.length === 0) return rawCombinedDelta;
 
+  // Step 1: Compute trend memory
   const recent = prevDeltas.slice(-memoryDepth);
   const trendMemory = recent
     .reduce((sum, d) => sum.add(d), new Decimal(0))
     .div(recent.length);
 
-  console.log("trendMemory", trendMemory);
+  console.log("trendMemory:", trendMemory.toString());
 
+  const trendAbs = trendMemory.abs();
   const directionSame = trendMemory.mul(rawCombinedDelta).gte(0);
-  let directionFactor: Decimal;
 
+  // Step 3: Compute direction factor
+  let directionFactor: Decimal;
   if (directionSame) {
-    const inertiaDelta = trendMemory.abs().mul(inertiaStrength);
+    const inertiaDelta = trendAbs.mul(
+      inertiaStrength ?? DEFAULT_INERTIA_STRENGTH
+    );
     directionFactor = Decimal.exp(inertiaDelta);
   } else {
-    const resistanceDelta = trendMemory.abs().mul(reversalResistance);
+    const resistanceDelta = trendAbs.mul(
+      reversalResistance ?? DEFAULT_REVERSAL_RESISTANCE
+    );
     directionFactor = Decimal.exp(resistanceDelta.neg());
   }
 
-  return rawCombinedDelta.mul(directionFactor);
+  // Step 4: Clamp direction factor to avoid spikes
+  const clampedFactor = Decimal.max(
+    minFactor ?? MIN_FACTOR,
+    Decimal.min(maxFactor ?? MAX_FACTOR, directionFactor)
+  );
+
+  console.log(
+    `clampedFactor:${clampedFactor},directionFactor:${directionFactor} `
+  );
+
+  // Step 5: Apply to delta
+  return rawCombinedDelta.mul(clampedFactor);
 }

@@ -1,11 +1,10 @@
 // src/lib/indexPrice.ts
 import Decimal from "decimal.js";
 import {
-  applyFinalAsymmetricNoise,
-  applyInertiaAndResistance,
-  applyVolatilityNoise,
+  applyInertiaAndResistanceWithClamp,
   computeLogReturn,
   computeVolatility,
+  InertiaOptions,
   tanhClampDelta,
 } from "./math";
 import { TokenPriceMap, TokenWeightMap } from "../types/types";
@@ -26,10 +25,7 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   biasScaleCapPercent?: number; // The maximum amount of increase or decrease that can be zoomed in/out at a time.
   prevTokenDeltas?: Decimal[];
   showLog?: boolean;
-  volatilityAmplifier?: number;
-  noiseRange?: number;
-  inertiaStrength?: number;
-  reversalResistance?: number;
+  inertiaOptions?: InertiaOptions;
 };
 
 export type NextIndex = {
@@ -142,12 +138,12 @@ export function computeBiasAdjustedIndexPrice(
   if (options?.showLog) {
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
-  combinedDelta = applyInertiaAndResistance(combinedDelta, {
-    prevDeltas: options?.prevTokenDeltas ?? [],
-    inertiaStrength: new Decimal(options?.inertiaStrength ?? 3),
-    reversalResistance: new Decimal(options?.reversalResistance ?? 5),
-    memoryDepth: options?.prevTokenDeltas?.length ?? 5,
-  });
+  combinedDelta = applyInertiaAndResistanceWithClamp(
+    combinedDelta,
+    options?.prevTokenDeltas ?? [],
+    options?.prevTokenDeltas?.length ?? 5,
+    options?.inertiaOptions ?? {}
+  );
 
   if (options?.showLog) {
     console.log(`rA:${rA.toString()}`);
@@ -178,17 +174,18 @@ export function computeBiasAdjustedIndexPrice(
   //   }
   // }
 
-  // if (options?.volatilityAmplifier && options?.noiseRange) {
-  //   combinedDelta = applyVolatilityNoise(combinedDelta, {
-  //     volatilityAmplifier: options.volatilityAmplifier,
-  //     noiseRange: options.noiseRange,
-  //   });
-  // }
-
   // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
   const indexPriceMultiplier = Decimal.exp(combinedDelta);
 
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
+
+  if (!nextIndexPrice.isFinite()) {
+    console.log("nextIndexPrice is not finite");
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO,
+    };
+  }
 
   return {
     nextIndexPrice,

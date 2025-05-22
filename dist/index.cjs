@@ -73,9 +73,7 @@ __export(src_exports, {
   VoteSource: () => VoteSource,
   VotedAB: () => VotedAB,
   ZERO: () => ZERO,
-  applyFinalAsymmetricNoise: () => applyFinalAsymmetricNoise,
-  applyInertiaAndResistance: () => applyInertiaAndResistance,
-  applyVolatilityNoise: () => applyVolatilityNoise,
+  applyInertiaAndResistanceWithClamp: () => applyInertiaAndResistanceWithClamp,
   computeBiasAdjustedIndexPrice: () => computeBiasAdjustedIndexPrice,
   computeLogReturn: () => computeLogReturn,
   computeVolatility: () => computeVolatility,
@@ -104,40 +102,39 @@ function computeVolatility(deltas) {
   const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new import_decimal.default(0));
   return sum.div(deltas.length);
 }
-function applyFinalAsymmetricNoise(baseMultiplier, tokenDelta, options) {
-  const asymmetryStrength = options?.asymmetryStrength ?? 0.06;
-  const randomness = options?.randomness ?? 3e-3;
-  const directionalBias = tokenDelta.clamp(-1, 1).mul(asymmetryStrength);
-  const noise = new import_decimal.default(Math.random() * randomness - randomness / 2);
-  const finalMultiplier = baseMultiplier.mul(
-    import_decimal.default.exp(directionalBias.add(noise))
-  );
-  return finalMultiplier;
-}
-function applyVolatilityNoise(delta, options) {
-  const amplifier = new import_decimal.default(options?.volatilityAmplifier ?? 1.115);
-  const noiseRange = options?.noiseRange ?? 0.015;
-  const amplified = delta.mul(import_decimal.default.pow(delta.abs().add(1), amplifier));
-  const noise = new import_decimal.default(Math.random() * noiseRange - noiseRange / 2);
-  return amplified.add(noise);
-}
-function applyInertiaAndResistance(rawCombinedDelta, options) {
-  const { prevDeltas, inertiaStrength, reversalResistance, memoryDepth } = options;
+var MAX_FACTOR = new import_decimal.default(3);
+var MIN_FACTOR = new import_decimal.default(0.01);
+var DEFAULT_INERTIA_STRENGTH = new import_decimal.default(10);
+var DEFAULT_REVERSAL_RESISTANCE = new import_decimal.default(35);
+function applyInertiaAndResistanceWithClamp(rawCombinedDelta, prevDeltas, memoryDepth, options) {
+  const { maxFactor, minFactor, inertiaStrength, reversalResistance } = options;
   if (prevDeltas.length === 0)
     return rawCombinedDelta;
   const recent = prevDeltas.slice(-memoryDepth);
   const trendMemory = recent.reduce((sum, d) => sum.add(d), new import_decimal.default(0)).div(recent.length);
-  console.log("trendMemory", trendMemory);
+  console.log("trendMemory:", trendMemory.toString());
+  const trendAbs = trendMemory.abs();
   const directionSame = trendMemory.mul(rawCombinedDelta).gte(0);
   let directionFactor;
   if (directionSame) {
-    const inertiaDelta = trendMemory.abs().mul(inertiaStrength);
+    const inertiaDelta = trendAbs.mul(
+      inertiaStrength ?? DEFAULT_INERTIA_STRENGTH
+    );
     directionFactor = import_decimal.default.exp(inertiaDelta);
   } else {
-    const resistanceDelta = trendMemory.abs().mul(reversalResistance);
+    const resistanceDelta = trendAbs.mul(
+      reversalResistance ?? DEFAULT_REVERSAL_RESISTANCE
+    );
     directionFactor = import_decimal.default.exp(resistanceDelta.neg());
   }
-  return rawCombinedDelta.mul(directionFactor);
+  const clampedFactor = import_decimal.default.max(
+    minFactor ?? MIN_FACTOR,
+    import_decimal.default.min(maxFactor ?? MAX_FACTOR, directionFactor)
+  );
+  console.log(
+    `clampedFactor:${clampedFactor},directionFactor:${directionFactor} `
+  );
+  return rawCombinedDelta.mul(clampedFactor);
 }
 
 // node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
@@ -1724,12 +1721,12 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   if (options?.showLog) {
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
-  combinedDelta = applyInertiaAndResistance(combinedDelta, {
-    prevDeltas: options?.prevTokenDeltas ?? [],
-    inertiaStrength: new import_decimal4.default(options?.inertiaStrength ?? 3),
-    reversalResistance: new import_decimal4.default(options?.reversalResistance ?? 5),
-    memoryDepth: options?.prevTokenDeltas?.length ?? 5
-  });
+  combinedDelta = applyInertiaAndResistanceWithClamp(
+    combinedDelta,
+    options?.prevTokenDeltas ?? [],
+    options?.prevTokenDeltas?.length ?? 5,
+    options?.inertiaOptions ?? {}
+  );
   if (options?.showLog) {
     console.log(`rA:${rA.toString()}`);
     console.log(`rB:${rB.toString()}`);
@@ -1743,6 +1740,13 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   }
   const indexPriceMultiplier = import_decimal4.default.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
+  if (!nextIndexPrice.isFinite()) {
+    console.log("nextIndexPrice is not finite");
+    return {
+      nextIndexPrice: ZERO,
+      delat: ZERO
+    };
+  }
   return {
     nextIndexPrice,
     delat: combinedDelta
@@ -1842,9 +1846,7 @@ var getMarketParameters = (ticker, price) => {
   VoteSource,
   VotedAB,
   ZERO,
-  applyFinalAsymmetricNoise,
-  applyInertiaAndResistance,
-  applyVolatilityNoise,
+  applyInertiaAndResistanceWithClamp,
   computeBiasAdjustedIndexPrice,
   computeLogReturn,
   computeVolatility,
