@@ -32,6 +32,11 @@ function testApplyInertiaAndResistance(
   );
   console.log(`rawDeltaDown:${rawDeltaDown.toString()}`);
   console.log(`deltaDown:${result2.toString()}`);
+  if (prevOraclePrice) {
+    const indexPriceMultiplier = Decimal.exp(result2);
+    const nextIndexPrice = prevOraclePrice.mul(indexPriceMultiplier);
+    console.log(`nextIndexPrice:${nextIndexPrice.toString()}`);
+  }
 }
 
 describe("math utils", () => {

@@ -102,10 +102,10 @@ function computeVolatility(deltas) {
   const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new import_decimal.default(0));
   return sum.div(deltas.length);
 }
-var MAX_FACTOR = new import_decimal.default(3);
+var MAX_FACTOR = new import_decimal.default(0.5);
 var MIN_FACTOR = new import_decimal.default(0.01);
-var DEFAULT_INERTIA_STRENGTH = new import_decimal.default(10);
-var DEFAULT_REVERSAL_RESISTANCE = new import_decimal.default(35);
+var DEFAULT_INERTIA_STRENGTH = new import_decimal.default(2.5);
+var DEFAULT_REVERSAL_RESISTANCE = new import_decimal.default(3.5);
 function applyInertiaAndResistanceWithClamp(rawCombinedDelta, prevDeltas, memoryDepth, options) {
   const { maxFactor, minFactor, inertiaStrength, reversalResistance } = options;
   if (prevDeltas.length === 0)
