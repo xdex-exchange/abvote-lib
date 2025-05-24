@@ -44,7 +44,7 @@ export type InertiaOptions = {
   reversalResistance?: Decimal;
 };
 
-const MAX_FACTOR = new Decimal(0.5);
+const MAX_FACTOR = new Decimal(1.5);
 const MIN_FACTOR = new Decimal(0.01);
 const DEFAULT_INERTIA_STRENGTH = new Decimal(2.5);
 const DEFAULT_REVERSAL_RESISTANCE = new Decimal(3.5);

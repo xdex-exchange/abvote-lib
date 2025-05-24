@@ -102,7 +102,7 @@ function computeVolatility(deltas) {
   const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new import_decimal.default(0));
   return sum.div(deltas.length);
 }
-var MAX_FACTOR = new import_decimal.default(0.5);
+var MAX_FACTOR = new import_decimal.default(1.5);
 var MIN_FACTOR = new import_decimal.default(0.01);
 var DEFAULT_INERTIA_STRENGTH = new import_decimal.default(2.5);
 var DEFAULT_REVERSAL_RESISTANCE = new import_decimal.default(3.5);
