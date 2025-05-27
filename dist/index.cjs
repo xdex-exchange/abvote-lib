@@ -1778,24 +1778,24 @@ function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPric
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
   const biasStrength = exponentPrice.sub(1);
   const biasDelta = baseLogReturn.mul(biasStrength);
-  let combinedDelta = baseLogReturn.add(biasDelta).mul(options?.aa ?? 135.12);
+  let combinedDelta = baseLogReturn.add(biasDelta);
   const baseVolatility = computeVolatility([combinedDelta]);
-  const gamma = import_decimal4.default.max(
-    new import_decimal4.default(0.5),
-    import_decimal4.default.min(new import_decimal4.default(0.99), new import_decimal4.default(1).sub(baseVolatility.mul(20)))
+  const beta = import_decimal4.default.max(
+    1,
+    import_decimal4.default.pow(options?.aa ?? 100, import_decimal4.default.sub(1, baseVolatility.mul(100)))
   );
-  const adjustedMultiplier = import_decimal4.default.exp(combinedDelta);
-  const adjustedIndexPrice = prevIndexPrice.mul(adjustedMultiplier);
-  const nextIndexPrice = prevIndexPrice.mul(gamma).add(adjustedIndexPrice.mul(new import_decimal4.default(1).sub(gamma)));
+  const scaledDelta = combinedDelta.mul(beta);
+  const nextIndexPrice = import_decimal4.default.exp(
+    import_decimal4.default.ln(prevIndexPrice).add(scaledDelta)
+  );
   if (options?.showLog) {
     console.log("\u{1F539} baseRatio:", import_decimal4.default.exp(weightedLogNow).toFixed(6));
     console.log("\u{1F539} prevBaseRatio:", import_decimal4.default.exp(weightedLogPrev).toFixed(6));
     console.log("\u{1F539} baseLogReturn:", baseLogReturn.toFixed(6));
     console.log("\u{1F539} biasStrength:", biasStrength.toFixed(6));
-    console.log("\u{1F539} combinedDelta (pre-clamp):", combinedDelta.toFixed(6));
     console.log("\u{1F539} baseVolatility:", baseVolatility.toFixed(6));
     console.log("\u{1F539} finalDelta:", combinedDelta.toFixed(6));
-    console.log("\u{1F539} gamma:", gamma.toFixed(4));
+    console.log("\u{1F539} scaledDelta:", scaledDelta.toFixed(6));
     console.log("\u{1F539} nextIndexPrice:", nextIndexPrice.toFixed(7));
   }
   return {

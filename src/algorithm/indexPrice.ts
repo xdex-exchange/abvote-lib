@@ -219,36 +219,28 @@ export function computeBiasDrivenIndexPriceV2(
 
   const biasStrength = exponentPrice.sub(1);
   const biasDelta = baseLogReturn.mul(biasStrength);
-  let combinedDelta = baseLogReturn.add(biasDelta).mul(options?.aa ?? 135.12);
+  let combinedDelta = baseLogReturn.add(biasDelta);
 
   const baseVolatility = computeVolatility([combinedDelta]);
-  // const dynamicMax = Decimal.max(baseVolatility.mul(3), MIN_DYNAMIC);
 
-  // const finalDelta = Decimal.tanh(combinedDelta.div(dynamicMax)).mul(
-  //   dynamicMax
-  // );
-
-  const gamma = Decimal.max(
-    new Decimal(0.5),
-    Decimal.min(new Decimal(0.99), new Decimal(1).sub(baseVolatility.mul(20)))
+  const beta = Decimal.max(
+    1,
+    Decimal.pow(options?.aa ?? 100, Decimal.sub(1, baseVolatility.mul(100)))
   );
+  const scaledDelta = combinedDelta.mul(beta);
 
-  const adjustedMultiplier = Decimal.exp(combinedDelta);
-  const adjustedIndexPrice = prevIndexPrice.mul(adjustedMultiplier);
-
-  const nextIndexPrice = prevIndexPrice
-    .mul(gamma)
-    .add(adjustedIndexPrice.mul(new Decimal(1).sub(gamma)));
+  const nextIndexPrice = Decimal.exp(
+    Decimal.ln(prevIndexPrice).add(scaledDelta)
+  );
 
   if (options?.showLog) {
     console.log("🔹 baseRatio:", Decimal.exp(weightedLogNow).toFixed(6));
     console.log("🔹 prevBaseRatio:", Decimal.exp(weightedLogPrev).toFixed(6));
     console.log("🔹 baseLogReturn:", baseLogReturn.toFixed(6));
     console.log("🔹 biasStrength:", biasStrength.toFixed(6));
-    console.log("🔹 combinedDelta (pre-clamp):", combinedDelta.toFixed(6));
     console.log("🔹 baseVolatility:", baseVolatility.toFixed(6));
     console.log("🔹 finalDelta:", combinedDelta.toFixed(6));
-    console.log("🔹 gamma:", gamma.toFixed(4));
+    console.log("🔹 scaledDelta:", scaledDelta.toFixed(6));
     console.log("🔹 nextIndexPrice:", nextIndexPrice.toFixed(7));
   }
 

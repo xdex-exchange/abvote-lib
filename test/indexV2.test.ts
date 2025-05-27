@@ -17,6 +17,9 @@ function runSequentialIndexSimulation(
   let prevIndexPrice = initialIndexPrice;
 
   testSeries.forEach((test, i) => {
+    console.log(
+      `\n=== ⏱️ ROUND ${i + 1} ${test.label ? `(${test.label})` : ""} ===`
+    );
     const result = computeBiasDrivenIndexPriceV2(
       test.prices,
       test.prevPrices,
@@ -27,15 +30,10 @@ function runSequentialIndexSimulation(
         showLog: true,
       }
     );
-
-    console.log(
-      `\n=== ⏱️ ROUND ${i + 1} ${test.label ? `(${test.label})` : ""} ===`
-    );
     console.log(`Prev Index Price: ${prevIndexPrice.toFixed(7)}`);
     console.log(`Next Index Price: ${result.nextIndexPrice.toFixed(7)}`);
     console.log(`Delta Applied: ${result.delat.toFixed(6)}`);
 
-    // 推进 prevIndexPrice
     prevIndexPrice = result.nextIndexPrice;
   });
 }
@@ -113,5 +111,44 @@ describe("index", () => {
       ],
       initialIndexPrice
     );
+  });
+  it("series", () => {
+    const initialIndexPrice = new Decimal("0.030129");
+    const rounds = [
+      {
+        label: "Round 1: down",
+        prices: {
+          A: new Decimal("13.987086344488754"),
+          B: new Decimal("0.22811410012002892"),
+        },
+        prevPrices: {
+          A: new Decimal("12.816315318121726"),
+          B: new Decimal("0.22811410012002892"),
+        },
+        tokenWeights: {
+          A: new Decimal("1"),
+          B: new Decimal("1"),
+        },
+        exponentPrice: new Decimal("1.0012"),
+      },
+      {
+        label: "Round 2: back to original",
+        prices: {
+          A: new Decimal("12.816315318121726"),
+          B: new Decimal("0.22811410012002892"),
+        },
+        prevPrices: {
+          A: new Decimal("13.987086344488754"),
+          B: new Decimal("0.22811410012002892"),
+        },
+        tokenWeights: {
+          A: new Decimal("1"),
+          B: new Decimal("1"),
+        },
+        exponentPrice: new Decimal("1.0012"),
+      },
+    ];
+
+    runSequentialIndexSimulation(rounds, initialIndexPrice);
   });
 });

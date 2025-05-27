@@ -21,7 +21,8 @@
     "test": "vitest",
     "testPredict": "vitest test/predictIndex.test.ts",
     "testIndex": "vitest test/index.test.ts",
-    "testIndexV2": "vitest test/indexV2.test.ts"
+    "testIndexV2": "vitest test/indexV2.test.ts",
+    "index": "vitest test/indexT.test.ts"
   },
   "devDependencies": {
     "ethers": "^6.13.5",
