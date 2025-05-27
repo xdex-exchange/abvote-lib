@@ -16,4 +16,4 @@ export const TWITTER_VOTE_AMOUNT = 10;
 export const USER_VOTE_AMOUNT = 1;
 export const ZERO = new Decimal(0);
 
-export const MIN_DYNAMIC = new Decimal(0.001);
+export const MIN_DYNAMIC = new Decimal(0.01);

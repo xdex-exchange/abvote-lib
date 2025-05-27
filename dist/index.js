@@ -44,10 +44,10 @@ function computeVolatility(deltas) {
   const sum = deltas.reduce((acc, d) => acc.add(d.abs()), new Decimal(0));
   return sum.div(deltas.length);
 }
-var MAX_FACTOR = new Decimal(1.5);
+var MAX_FACTOR = new Decimal(2);
 var MIN_FACTOR = new Decimal(0.01);
-var DEFAULT_INERTIA_STRENGTH = new Decimal(2.5);
-var DEFAULT_REVERSAL_RESISTANCE = new Decimal(3.5);
+var DEFAULT_INERTIA_STRENGTH = new Decimal(4);
+var DEFAULT_REVERSAL_RESISTANCE = new Decimal(5);
 function applyInertiaAndResistanceWithClamp(rawCombinedDelta, prevDeltas, memoryDepth, options) {
   const { maxFactor, minFactor, inertiaStrength, reversalResistance } = options;
   if (prevDeltas.length === 0)
@@ -1498,7 +1498,7 @@ var MIN_PRICE_CHANGE_PPM = 1;
 var TWITTER_VOTE_AMOUNT = 10;
 var USER_VOTE_AMOUNT = 1;
 var ZERO = new Decimal2(0);
-var MIN_DYNAMIC = new Decimal2(1e-3);
+var MIN_DYNAMIC = new Decimal2(0.01);
 
 // src/types/types.ts
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
@@ -1694,6 +1694,56 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     delat: combinedDelta
   };
 }
+function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new Decimal4(INITIAL_INDEX_PRICE), options) {
+  const [a, b] = Object.keys(prices);
+  if (!a || !b)
+    throw new Error("Need exactly two tokens");
+  const aPrice = prices[a];
+  const bPrice = prices[b];
+  const aPrev = prevPrices[a];
+  const bPrev = prevPrices[b];
+  if (aPrice.lte(0) || bPrice.lte(0) || aPrev.lte(0) || bPrev.lte(0)) {
+    throw new Error("Invalid price data");
+  }
+  const wA = weights[a];
+  const wB = weights[b];
+  const totalWeight = wA.add(wB);
+  const normWA = wA.div(totalWeight);
+  const normWB = wB.div(totalWeight);
+  const logA = Decimal4.ln(aPrice);
+  const logB = Decimal4.ln(bPrice);
+  const logAPrev = Decimal4.ln(aPrev);
+  const logBPrev = Decimal4.ln(bPrev);
+  const weightedLogNow = logB.mul(normWB).sub(logA.mul(normWA));
+  const weightedLogPrev = logBPrev.mul(normWB).sub(logAPrev.mul(normWA));
+  const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
+  const biasStrength = exponentPrice.sub(1);
+  const biasDelta = baseLogReturn.mul(biasStrength);
+  let combinedDelta = baseLogReturn.add(biasDelta).mul(options?.aa ?? 135.12);
+  const baseVolatility = computeVolatility([combinedDelta]);
+  const gamma = Decimal4.max(
+    new Decimal4(0.5),
+    Decimal4.min(new Decimal4(0.99), new Decimal4(1).sub(baseVolatility.mul(20)))
+  );
+  const adjustedMultiplier = Decimal4.exp(combinedDelta);
+  const adjustedIndexPrice = prevIndexPrice.mul(adjustedMultiplier);
+  const nextIndexPrice = prevIndexPrice.mul(gamma).add(adjustedIndexPrice.mul(new Decimal4(1).sub(gamma)));
+  if (options?.showLog) {
+    console.log("\u{1F539} baseRatio:", Decimal4.exp(weightedLogNow).toFixed(6));
+    console.log("\u{1F539} prevBaseRatio:", Decimal4.exp(weightedLogPrev).toFixed(6));
+    console.log("\u{1F539} baseLogReturn:", baseLogReturn.toFixed(6));
+    console.log("\u{1F539} biasStrength:", biasStrength.toFixed(6));
+    console.log("\u{1F539} combinedDelta (pre-clamp):", combinedDelta.toFixed(6));
+    console.log("\u{1F539} baseVolatility:", baseVolatility.toFixed(6));
+    console.log("\u{1F539} finalDelta:", combinedDelta.toFixed(6));
+    console.log("\u{1F539} gamma:", gamma.toFixed(4));
+    console.log("\u{1F539} nextIndexPrice:", nextIndexPrice.toFixed(7));
+  }
+  return {
+    nextIndexPrice,
+    delat: combinedDelta
+  };
+}
 function predictIndexImpactFromExponentOnly(exponentPrice, prevIndexPrice, options) {
   const { biasShiftWeight } = config(options);
   const biasShiftStrengthDelta = exponentPrice.sub(EXPONENT_INIT);
@@ -1789,6 +1839,7 @@ export {
   ZERO,
   applyInertiaAndResistanceWithClamp,
   computeBiasAdjustedIndexPrice,
+  computeBiasDrivenIndexPriceV2,
   computeLogReturn,
   computeVolatility,
   generateEventHash,

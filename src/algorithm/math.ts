@@ -44,10 +44,10 @@ export type InertiaOptions = {
   reversalResistance?: Decimal;
 };
 
-const MAX_FACTOR = new Decimal(1.5);
+const MAX_FACTOR = new Decimal(2);
 const MIN_FACTOR = new Decimal(0.01);
-const DEFAULT_INERTIA_STRENGTH = new Decimal(2.5);
-const DEFAULT_REVERSAL_RESISTANCE = new Decimal(3.5);
+const DEFAULT_INERTIA_STRENGTH = new Decimal(4);
+const DEFAULT_REVERSAL_RESISTANCE = new Decimal(5);
 
 export function applyInertiaAndResistanceWithClamp(
   rawCombinedDelta: Decimal,
@@ -94,6 +94,18 @@ export function applyInertiaAndResistanceWithClamp(
     `clampedFactor:${clampedFactor},directionFactor:${directionFactor} `
   );
 
-  // Step 5: Apply to delta
+  // let clampedFactor1: Decimal = new Decimal(0);
+
+  // {
+  //   const logFactor = Decimal.ln(directionFactor);
+  //   const maxLog = Decimal.ln(maxFactor ?? MAX_FACTOR);
+  //   const smoothedLog = Decimal.tanh(logFactor.div(maxLog)).mul(maxLog);
+  //   clampedFactor1 = Decimal.exp(smoothedLog);
+  //   console.log(
+  //     `clampedFactor1:${clampedFactor1},directionFactor:${directionFactor} `
+  //   );
+  // }
+
+  // Step 5: Apply to delt
   return rawCombinedDelta.mul(clampedFactor);
 }

@@ -91,6 +91,12 @@ type NextIndex = {
     delat: Decimal;
 };
 declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): NextIndex;
+declare function computeBiasDrivenIndexPriceV2(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: {
+    prevBaseRatios?: Decimal[];
+    inertiaOptions?: any;
+    showLog?: boolean;
+    aa?: number;
+}): NextIndex;
 type PredictedIndexImpact = {
     predictedIndexPrice: Decimal;
     deltaPercent: Decimal;
@@ -123,4 +129,4 @@ declare const USER_VOTE_AMOUNT = 1;
 declare const ZERO: Decimal;
 declare const MIN_DYNAMIC: Decimal;
 
-export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, InertiaOptions, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyInertiaAndResistanceWithClamp, computeBiasAdjustedIndexPrice, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
+export { EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, InertiaOptions, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyInertiaAndResistanceWithClamp, computeBiasAdjustedIndexPrice, computeBiasDrivenIndexPriceV2, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };

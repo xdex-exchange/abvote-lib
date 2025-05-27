@@ -157,37 +157,6 @@ export function computeBiasAdjustedIndexPrice(
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
 
-  // Step 5.3: Daily Fluctuation Smoothing Limiting (based on index or token price)
-  // if (options?.maxDailyPercent && options?.price24hAgo) {
-  //   const originalCombinedDelta = combinedDelta;
-
-  //   const return24h = Decimal.ln(prevIndexPrice.div(options.price24hAgo));
-  //   const effectiveDailyDelta = combinedDelta.add(return24h);
-  //   const cappedEffective = tanhClampDelta(
-  //     effectiveDailyDelta,
-  //     options.maxDailyPercent
-  //   );
-  //   let nextCombinedDelta = cappedEffective.sub(return24h);
-
-  //   if (
-  //     !nextCombinedDelta.isZero() &&
-  //     Decimal.sign(nextCombinedDelta) !== Decimal.sign(originalCombinedDelta)
-  //   ) {
-  //     nextCombinedDelta = new Decimal(0);
-  //   }
-
-  //   combinedDelta = nextCombinedDelta;
-
-  //   if (options?.showLog) {
-  //     console.log(
-  //       `🛡 Daily Clamp: return24h=${return24h.toFixed(4)}, ` +
-  //         `effectiveDailyDelta=${effectiveDailyDelta.toFixed(4)}, ` +
-  //         `cappedEffective=${cappedEffective.toFixed(4)}, ` +
-  //         `final combinedDelta=${combinedDelta.toFixed(4)}`
-  //     );
-  //   }
-  // }
-
   // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
   const indexPriceMultiplier = Decimal.exp(combinedDelta);
 
@@ -199,6 +168,88 @@ export function computeBiasAdjustedIndexPrice(
       nextIndexPrice: ZERO,
       delat: ZERO,
     };
+  }
+
+  return {
+    nextIndexPrice,
+    delat: combinedDelta,
+  };
+}
+
+export function computeBiasDrivenIndexPriceV2(
+  prices: TokenPriceMap,
+  prevPrices: TokenPriceMap,
+  weights: TokenWeightMap,
+  exponentPrice: Decimal,
+  prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
+  options?: {
+    prevBaseRatios?: Decimal[]; // prev B/A series, for volatility calculation
+    inertiaOptions?: any;
+    showLog?: boolean;
+    aa?: number;
+  }
+): NextIndex {
+  const [a, b] = Object.keys(prices);
+  if (!a || !b) throw new Error("Need exactly two tokens");
+
+  const aPrice = prices[a];
+  const bPrice = prices[b];
+  const aPrev = prevPrices[a];
+  const bPrev = prevPrices[b];
+
+  if (aPrice.lte(0) || bPrice.lte(0) || aPrev.lte(0) || bPrev.lte(0)) {
+    throw new Error("Invalid price data");
+  }
+
+  const wA = weights[a];
+  const wB = weights[b];
+  const totalWeight = wA.add(wB);
+  const normWA = wA.div(totalWeight);
+  const normWB = wB.div(totalWeight);
+
+  const logA = Decimal.ln(aPrice);
+  const logB = Decimal.ln(bPrice);
+  const logAPrev = Decimal.ln(aPrev);
+  const logBPrev = Decimal.ln(bPrev);
+
+  const weightedLogNow = logB.mul(normWB).sub(logA.mul(normWA));
+  const weightedLogPrev = logBPrev.mul(normWB).sub(logAPrev.mul(normWA));
+
+  const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
+
+  const biasStrength = exponentPrice.sub(1);
+  const biasDelta = baseLogReturn.mul(biasStrength);
+  let combinedDelta = baseLogReturn.add(biasDelta).mul(options?.aa ?? 135.12);
+
+  const baseVolatility = computeVolatility([combinedDelta]);
+  // const dynamicMax = Decimal.max(baseVolatility.mul(3), MIN_DYNAMIC);
+
+  // const finalDelta = Decimal.tanh(combinedDelta.div(dynamicMax)).mul(
+  //   dynamicMax
+  // );
+
+  const gamma = Decimal.max(
+    new Decimal(0.5),
+    Decimal.min(new Decimal(0.99), new Decimal(1).sub(baseVolatility.mul(20)))
+  );
+
+  const adjustedMultiplier = Decimal.exp(combinedDelta);
+  const adjustedIndexPrice = prevIndexPrice.mul(adjustedMultiplier);
+
+  const nextIndexPrice = prevIndexPrice
+    .mul(gamma)
+    .add(adjustedIndexPrice.mul(new Decimal(1).sub(gamma)));
+
+  if (options?.showLog) {
+    console.log("🔹 baseRatio:", Decimal.exp(weightedLogNow).toFixed(6));
+    console.log("🔹 prevBaseRatio:", Decimal.exp(weightedLogPrev).toFixed(6));
+    console.log("🔹 baseLogReturn:", baseLogReturn.toFixed(6));
+    console.log("🔹 biasStrength:", biasStrength.toFixed(6));
+    console.log("🔹 combinedDelta (pre-clamp):", combinedDelta.toFixed(6));
+    console.log("🔹 baseVolatility:", baseVolatility.toFixed(6));
+    console.log("🔹 finalDelta:", combinedDelta.toFixed(6));
+    console.log("🔹 gamma:", gamma.toFixed(4));
+    console.log("🔹 nextIndexPrice:", nextIndexPrice.toFixed(7));
   }
 
   return {
