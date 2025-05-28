@@ -1773,8 +1773,8 @@ function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPric
   const logB = import_decimal4.default.ln(bPrice);
   const logAPrev = import_decimal4.default.ln(aPrev);
   const logBPrev = import_decimal4.default.ln(bPrev);
-  const weightedLogNow = logB.mul(normWB).sub(logA.mul(normWA));
-  const weightedLogPrev = logBPrev.mul(normWB).sub(logAPrev.mul(normWA));
+  const weightedLogNow = logA.mul(normWA).sub(logB.mul(normWB));
+  const weightedLogPrev = logAPrev.mul(normWA).sub(logBPrev.mul(normWB));
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
   const biasStrength = exponentPrice.sub(1);
   const biasDelta = baseLogReturn.mul(biasStrength);

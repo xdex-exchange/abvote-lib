@@ -45,14 +45,14 @@ describe("index", () => {
     runSequentialIndexSimulation(
       [
         {
-          label: "Round 1: Slight rise",
+          label: "Round 1: Slight up",
           prices: {
-            A: new Decimal("12.809483394925397"),
-            B: new Decimal("0.22811410012002892"),
+            A: new Decimal("0.22811410012002892"),
+            B: new Decimal("12.809483394925397"),
           },
           prevPrices: {
-            A: new Decimal("12.816315318121726"),
-            B: new Decimal("0.22811410012002892"),
+            A: new Decimal("0.22811410012002892"),
+            B: new Decimal("12.816315318121726"),
           },
           tokenWeights: {
             A: new Decimal("1"),
@@ -63,12 +63,12 @@ describe("index", () => {
         {
           label: "Round 2: Vote push up",
           prices: {
-            A: new Decimal("12.80"),
-            B: new Decimal("0.229"),
+            A: new Decimal("0.229"),
+            B: new Decimal("12.80"),
           },
           prevPrices: {
-            A: new Decimal("12.80"),
-            B: new Decimal("0.229"),
+            A: new Decimal("0.229"),
+            B: new Decimal("12.80"),
           },
           tokenWeights: {
             A: new Decimal("1"),
@@ -77,30 +77,30 @@ describe("index", () => {
           exponentPrice: new Decimal("1.0045"),
         },
         {
-          label: "Round 3: Ratio down",
+          label: "Round 3: Slight down",
           prices: {
-            A: new Decimal("12.812313393229338"),
-            B: new Decimal("0.22811410012002892"),
+            A: new Decimal("0.22811410012002892"),
+            B: new Decimal("12.812313393229338"),
           },
           prevPrices: {
-            A: new Decimal("12.808923393815556"),
-            B: new Decimal("0.22811410012002892"),
+            A: new Decimal("0.22811410012002892"),
+            B: new Decimal("12.808923393815556"),
           },
           tokenWeights: {
             A: new Decimal("1"),
             B: new Decimal("1"),
           },
-          exponentPrice: new Decimal("1.0000"),
+          exponentPrice: new Decimal("1.0045"),
         },
         {
           label: "Round 4: Vote push down",
           prices: {
-            A: new Decimal("12.95"),
-            B: new Decimal("0.228"),
+            A: new Decimal("0.228"),
+            B: new Decimal("12.95"),
           },
           prevPrices: {
-            A: new Decimal("12.95"),
-            B: new Decimal("0.228"),
+            A: new Decimal("0.228"),
+            B: new Decimal("12.95"),
           },
           tokenWeights: {
             A: new Decimal("1"),
@@ -118,12 +118,12 @@ describe("index", () => {
       {
         label: "Round 1: down",
         prices: {
-          A: new Decimal("13.987086344488754"),
-          B: new Decimal("0.22811410012002892"),
+          A: new Decimal("0.22811410012002892"),
+          B: new Decimal("13.987086344488754"),
         },
         prevPrices: {
-          A: new Decimal("12.816315318121726"),
-          B: new Decimal("0.22811410012002892"),
+          A: new Decimal("0.22811410012002892"),
+          B: new Decimal("12.816315318121726"),
         },
         tokenWeights: {
           A: new Decimal("1"),
@@ -134,12 +134,12 @@ describe("index", () => {
       {
         label: "Round 2: back to original",
         prices: {
-          A: new Decimal("12.816315318121726"),
-          B: new Decimal("0.22811410012002892"),
+          A: new Decimal("0.22811410012002892"),
+          B: new Decimal("12.816315318121726"),
         },
         prevPrices: {
-          A: new Decimal("13.987086344488754"),
-          B: new Decimal("0.22811410012002892"),
+          A: new Decimal("0.22811410012002892"),
+          B: new Decimal("13.987086344488754"),
         },
         tokenWeights: {
           A: new Decimal("1"),

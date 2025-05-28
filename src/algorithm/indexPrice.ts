@@ -211,9 +211,8 @@ export function computeBiasDrivenIndexPriceV2(
   const logB = Decimal.ln(bPrice);
   const logAPrev = Decimal.ln(aPrev);
   const logBPrev = Decimal.ln(bPrev);
-
-  const weightedLogNow = logB.mul(normWB).sub(logA.mul(normWA));
-  const weightedLogPrev = logBPrev.mul(normWB).sub(logAPrev.mul(normWA));
+  const weightedLogNow = logA.mul(normWA).sub(logB.mul(normWB));
+  const weightedLogPrev = logAPrev.mul(normWA).sub(logBPrev.mul(normWB));
 
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
 
