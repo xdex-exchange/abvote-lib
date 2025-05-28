@@ -1499,6 +1499,9 @@ var TWITTER_VOTE_AMOUNT = 10;
 var USER_VOTE_AMOUNT = 1;
 var ZERO = new Decimal2(0);
 var MIN_DYNAMIC = new Decimal2(0.01);
+var DEFAULT_TOKEN_WEIGHT = 1e6;
+var DEFAULT_TWITTER_VOTE_WEIGHT = 1;
+var DEFAULT_PRICE_ALGORITHM = 1;
 
 // src/types/types.ts
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
@@ -1821,6 +1824,9 @@ var getMarketParameters = (ticker, price) => {
   };
 };
 export {
+  DEFAULT_PRICE_ALGORITHM,
+  DEFAULT_TOKEN_WEIGHT,
+  DEFAULT_TWITTER_VOTE_WEIGHT,
   EXPONENT_DECIMALS,
   EXPONENT_HALF_DECIMALS,
   EXPONENT_INIT,

@@ -183,7 +183,7 @@ export function computeBiasDrivenIndexPriceV2(
   exponentPrice: Decimal,
   prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
   options?: {
-    prevBaseRatios?: Decimal[]; // prev B/A series, for volatility calculation
+    prevBaseRatios?: Decimal[]; // prev A/B series, for volatility calculation
     inertiaOptions?: any;
     showLog?: boolean;
     aa?: number;

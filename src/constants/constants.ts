@@ -17,3 +17,6 @@ export const USER_VOTE_AMOUNT = 1;
 export const ZERO = new Decimal(0);
 
 export const MIN_DYNAMIC = new Decimal(0.01);
+export const DEFAULT_TOKEN_WEIGHT = 1000000;
+export const DEFAULT_TWITTER_VOTE_WEIGHT = 1;
+export const DEFAULT_PRICE_ALGORITHM = 1;
