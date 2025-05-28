@@ -57,6 +57,7 @@ var __privateMethod = (obj, member, method) => {
 // src/index.ts
 var src_exports = {};
 __export(src_exports, {
+  ABValue: () => ABValue,
   DEFAULT_PRICE_ALGORITHM: () => DEFAULT_PRICE_ALGORITHM,
   DEFAULT_TOKEN_WEIGHT: () => DEFAULT_TOKEN_WEIGHT,
   DEFAULT_TWITTER_VOTE_WEIGHT: () => DEFAULT_TWITTER_VOTE_WEIGHT,
@@ -141,10 +142,10 @@ function applyInertiaAndResistanceWithClamp(rawCombinedDelta, prevDeltas, memory
   return rawCombinedDelta.mul(clampedFactor);
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
+// node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/properties.js
+// node_modules/ethers/lib.esm/utils/properties.js
 function checkType(value, type, name) {
   const types = type.split("|").map((t) => t.trim());
   for (let i = 0; i < types.length; i++) {
@@ -177,7 +178,7 @@ function defineProperties(target, values, types) {
   }
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/errors.js
+// node_modules/ethers/lib.esm/utils/errors.js
 function stringify(value) {
   if (value == null) {
     return "null";
@@ -306,7 +307,7 @@ function assertPrivate(givenGuard, guard, className) {
   }
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/data.js
+// node_modules/ethers/lib.esm/utils/data.js
 function _getBytes(value, name, copy) {
   if (value instanceof Uint8Array) {
     if (copy) {
@@ -382,7 +383,7 @@ function zeroPadBytes(data, length) {
   return zeroPad(data, length, false);
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/maths.js
+// node_modules/ethers/lib.esm/utils/maths.js
 var BN_0 = BigInt(0);
 var BN_1 = BigInt(1);
 var maxValue = 9007199254740991;
@@ -509,7 +510,7 @@ function toBeArray(_value) {
   return result;
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/utf8.js
+// node_modules/ethers/lib.esm/utils/utf8.js
 function errorFunc(reason, offset, bytes2, output2, badCodepoint) {
   assertArgument(false, `invalid codepoint at offset ${offset}; ${reason}`, "bytes", bytes2);
 }
@@ -575,7 +576,7 @@ function toUtf8Bytes(str, form) {
   return new Uint8Array(result);
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/fixednumber.js
+// node_modules/ethers/lib.esm/utils/fixednumber.js
 var BN_N1 = BigInt(-1);
 var BN_02 = BigInt(0);
 var BN_12 = BigInt(1);
@@ -1079,7 +1080,7 @@ div_fn = function(o, safeOp) {
 };
 var FixedNumber = _FixedNumber;
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/units.js
+// node_modules/ethers/lib.esm/utils/units.js
 var names = [
   "wei",
   "kwei",
@@ -1102,7 +1103,7 @@ function parseUnits(value, unit) {
   return FixedNumber.fromString(value, { decimals, width: 512 }).value;
 }
 
-// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/_assert.js
+// node_modules/@noble/hashes/esm/_assert.js
 function number(n) {
   if (!Number.isSafeInteger(n) || n < 0)
     throw new Error(`Wrong positive integer: ${n}`);
@@ -1127,7 +1128,7 @@ function output(out, instance) {
   }
 }
 
-// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/_u64.js
+// node_modules/@noble/hashes/esm/_u64.js
 var U32_MASK64 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
 var _32n = /* @__PURE__ */ BigInt(32);
 function fromBig(n, le = false) {
@@ -1149,7 +1150,7 @@ var rotlSL = (h, l, s) => l << s | h >>> 32 - s;
 var rotlBH = (h, l, s) => l << s - 32 | h >>> 64 - s;
 var rotlBL = (h, l, s) => h << s - 32 | l >>> 64 - s;
 
-// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/utils.js
+// node_modules/@noble/hashes/esm/utils.js
 var u8a = (a) => a instanceof Uint8Array;
 var u32 = (arr) => new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
 var isLE = new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
@@ -1191,7 +1192,7 @@ function wrapXOFConstructorWithOpts(hashCons) {
   return hashC;
 }
 
-// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/sha3.js
+// node_modules/@noble/hashes/esm/sha3.js
 var [SHA3_PI, SHA3_ROTL, _SHA3_IOTA] = [[], [], []];
 var _0n = /* @__PURE__ */ BigInt(0);
 var _1n = /* @__PURE__ */ BigInt(1);
@@ -1371,7 +1372,7 @@ var genShake = (suffix, blockLen, outputLen) => wrapXOFConstructorWithOpts((opts
 var shake128 = /* @__PURE__ */ genShake(31, 168, 128 / 8);
 var shake256 = /* @__PURE__ */ genShake(31, 136, 256 / 8);
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/crypto/keccak.js
+// node_modules/ethers/lib.esm/crypto/keccak.js
 var locked = false;
 var _keccak256 = function(data) {
   return keccak_256(data);
@@ -1393,7 +1394,7 @@ keccak256.register = function(func) {
 };
 Object.freeze(keccak256);
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/address/address.js
+// node_modules/ethers/lib.esm/address/address.js
 var BN_03 = BigInt(0);
 var BN_36 = BigInt(36);
 function getChecksumAddress(address) {
@@ -1476,7 +1477,7 @@ function getAddress(address) {
   assertArgument(false, "invalid address", "address", address);
 }
 
-// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/hash/solidity.js
+// node_modules/ethers/lib.esm/hash/solidity.js
 var regexBytes = new RegExp("^bytes([0-9]+)$");
 var regexNumber = new RegExp("^(u?int)([0-9]*)$");
 var regexArray = new RegExp("^(.*)\\[([0-9]*)\\]$");
@@ -1566,6 +1567,13 @@ var DEFAULT_TWITTER_VOTE_WEIGHT = 1;
 var DEFAULT_PRICE_ALGORITHM = 1;
 
 // src/types/types.ts
+var import_decimal3 = __toESM(require("decimal.js"), 1);
+var ABValue = class {
+  constructor(a, b) {
+    this.A = (0, import_decimal3.default)(a);
+    this.B = (0, import_decimal3.default)(b);
+  }
+};
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
   VoteSource2["TWITTER"] = "TWITTER";
   VoteSource2["CHAIN"] = "CHAIN";
@@ -1579,7 +1587,7 @@ var VotedAB = /* @__PURE__ */ ((VotedAB2) => {
 })(VotedAB || {});
 
 // src/algorithm/exponent.ts
-var import_decimal3 = __toESM(require("decimal.js"), 1);
+var import_decimal4 = __toESM(require("decimal.js"), 1);
 var ExponentService = class {
   constructor() {
     this.decimals = EXPONENT_DECIMALS;
@@ -1645,8 +1653,8 @@ var ExponentService = class {
     };
   }
   getExponentPrice() {
-    const exponentA = new import_decimal3.default(this.a.toString());
-    const exponentB = new import_decimal3.default(this.b.toString());
+    const exponentA = new import_decimal4.default(this.a.toString());
+    const exponentB = new import_decimal4.default(this.b.toString());
     return exponentB.div(exponentA);
   }
   serialize() {
@@ -1669,18 +1677,18 @@ var ExponentService = class {
 };
 
 // src/algorithm/indexPrice.ts
-var import_decimal4 = __toESM(require("decimal.js"), 1);
+var import_decimal5 = __toESM(require("decimal.js"), 1);
 function config(options) {
-  const tokenWeight = new import_decimal4.default(options?.tokenWeight ?? 0.5);
-  const biasShiftWeight = new import_decimal4.default(options?.biasShiftWeight ?? 0.25);
-  const biasScaleWeight = new import_decimal4.default(options?.biasScaleWeight ?? 0.25);
+  const tokenWeight = new import_decimal5.default(options?.tokenWeight ?? 0.5);
+  const biasShiftWeight = new import_decimal5.default(options?.biasShiftWeight ?? 0.25);
+  const biasScaleWeight = new import_decimal5.default(options?.biasScaleWeight ?? 0.25);
   return {
     tokenWeight,
     biasShiftWeight,
     biasScaleWeight
   };
 }
-function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal4.default(INITIAL_INDEX_PRICE), options) {
+function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal5.default(INITIAL_INDEX_PRICE), options) {
   const symbols = Object.keys(prices);
   if (symbols.length < 2)
     return {
@@ -1695,12 +1703,12 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     };
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
-  const aaPrice = prices[aaSymbol];
-  const aaPrevPrice = prevPrices[aaSymbol];
-  const bbPrice = prices[bbSymbol];
-  const bbPrevPrice = prevPrices[bbSymbol];
-  const aaWeight = weights[aaSymbol];
-  const bbWeight = weights[bbSymbol];
+  const aaPrice = prices.A;
+  const aaPrevPrice = prevPrices.A;
+  const bbPrice = prices.B;
+  const bbPrevPrice = prevPrices.B;
+  const aaWeight = weights.A;
+  const bbWeight = weights.B;
   if (aaPrice.lte(0) || aaPrevPrice.lte(0) || bbPrice.lte(0) || bbPrevPrice.lte(0)) {
     return {
       nextIndexPrice: ZERO,
@@ -1721,8 +1729,8 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
   const rawBiasScaleDelta = tokenDelta.mul(exponentPrice.sub(EXPONENT_INIT));
   let rawCombinedDelta = tokenDelta.mul(tokenWeight).add(biasShiftStrengthDelta.mul(biasShiftWeight)).add(rawBiasScaleDelta.mul(biasScaleWeight));
   const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
-  const dynamicMax = import_decimal4.default.max(recentVolatility.mul(3), MIN_DYNAMIC);
-  let combinedDelta = import_decimal4.default.tanh(rawCombinedDelta.div(dynamicMax)).mul(
+  const dynamicMax = import_decimal5.default.max(recentVolatility.mul(3), MIN_DYNAMIC);
+  let combinedDelta = import_decimal5.default.tanh(rawCombinedDelta.div(dynamicMax)).mul(
     dynamicMax
   );
   if (options?.showLog) {
@@ -1745,7 +1753,7 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     console.log(`dynamicMax: ${dynamicMax.toString()}`);
     console.log(`combinedDelta: ${combinedDelta.toString()}`);
   }
-  const indexPriceMultiplier = import_decimal4.default.exp(combinedDelta);
+  const indexPriceMultiplier = import_decimal5.default.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   if (!nextIndexPrice.isFinite()) {
     console.log("nextIndexPrice is not finite");
@@ -1759,26 +1767,26 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     delat: combinedDelta
   };
 }
-function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal4.default(INITIAL_INDEX_PRICE), options) {
+function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPrice, prevIndexPrice = new import_decimal5.default(INITIAL_INDEX_PRICE), options) {
   const [a, b] = Object.keys(prices);
   if (!a || !b)
     throw new Error("Need exactly two tokens");
-  const aPrice = prices[a];
-  const bPrice = prices[b];
-  const aPrev = prevPrices[a];
-  const bPrev = prevPrices[b];
+  const aPrice = prices.A;
+  const bPrice = prices.B;
+  const aPrev = prevPrices.A;
+  const bPrev = prevPrices.B;
   if (aPrice.lte(0) || bPrice.lte(0) || aPrev.lte(0) || bPrev.lte(0)) {
     throw new Error("Invalid price data");
   }
-  const wA = weights[a];
-  const wB = weights[b];
+  const wA = weights.A;
+  const wB = weights.B;
   const totalWeight = wA.add(wB);
   const normWA = wA.div(totalWeight);
   const normWB = wB.div(totalWeight);
-  const logA = import_decimal4.default.ln(aPrice);
-  const logB = import_decimal4.default.ln(bPrice);
-  const logAPrev = import_decimal4.default.ln(aPrev);
-  const logBPrev = import_decimal4.default.ln(bPrev);
+  const logA = import_decimal5.default.ln(aPrice);
+  const logB = import_decimal5.default.ln(bPrice);
+  const logAPrev = import_decimal5.default.ln(aPrev);
+  const logBPrev = import_decimal5.default.ln(bPrev);
   const weightedLogNow = logA.mul(normWA).sub(logB.mul(normWB));
   const weightedLogPrev = logAPrev.mul(normWA).sub(logBPrev.mul(normWB));
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
@@ -1786,17 +1794,17 @@ function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPric
   const biasDelta = baseLogReturn.mul(biasStrength);
   let combinedDelta = baseLogReturn.add(biasDelta);
   const baseVolatility = computeVolatility([combinedDelta]);
-  const beta = import_decimal4.default.max(
+  const beta = import_decimal5.default.max(
     1,
-    import_decimal4.default.pow(options?.aa ?? 100, import_decimal4.default.sub(1, baseVolatility.mul(100)))
+    import_decimal5.default.pow(options?.aa ?? 100, import_decimal5.default.sub(1, baseVolatility.mul(100)))
   );
   const scaledDelta = combinedDelta.mul(beta);
-  const nextIndexPrice = import_decimal4.default.exp(
-    import_decimal4.default.ln(prevIndexPrice).add(scaledDelta)
+  const nextIndexPrice = import_decimal5.default.exp(
+    import_decimal5.default.ln(prevIndexPrice).add(scaledDelta)
   );
   if (options?.showLog) {
-    console.log("\u{1F539} baseRatio:", import_decimal4.default.exp(weightedLogNow).toFixed(6));
-    console.log("\u{1F539} prevBaseRatio:", import_decimal4.default.exp(weightedLogPrev).toFixed(6));
+    console.log("\u{1F539} baseRatio:", import_decimal5.default.exp(weightedLogNow).toFixed(6));
+    console.log("\u{1F539} prevBaseRatio:", import_decimal5.default.exp(weightedLogPrev).toFixed(6));
     console.log("\u{1F539} baseLogReturn:", baseLogReturn.toFixed(6));
     console.log("\u{1F539} biasStrength:", biasStrength.toFixed(6));
     console.log("\u{1F539} baseVolatility:", baseVolatility.toFixed(6));
@@ -1814,12 +1822,12 @@ function predictIndexImpactFromExponentOnly(exponentPrice, prevIndexPrice, optio
   const biasShiftStrengthDelta = exponentPrice.sub(EXPONENT_INIT);
   const rawCombinedDelta = biasShiftStrengthDelta.mul(biasShiftWeight);
   const recentVolatility = computeVolatility(options?.prevTokenDeltas ?? []);
-  const dynamicMax = import_decimal4.default.max(recentVolatility.mul(3), MIN_DYNAMIC);
-  let combinedDelta = import_decimal4.default.tanh(rawCombinedDelta.div(dynamicMax)).mul(
+  const dynamicMax = import_decimal5.default.max(recentVolatility.mul(3), MIN_DYNAMIC);
+  let combinedDelta = import_decimal5.default.tanh(rawCombinedDelta.div(dynamicMax)).mul(
     dynamicMax
   );
   if (options?.maxDailyPercent && options?.price24hAgo) {
-    const return24h = import_decimal4.default.ln(prevIndexPrice.div(options.price24hAgo));
+    const return24h = import_decimal5.default.ln(prevIndexPrice.div(options.price24hAgo));
     const effectiveDailyDelta = combinedDelta.add(return24h);
     const cappedEffective = tanhClampDelta(
       effectiveDailyDelta,
@@ -1827,7 +1835,7 @@ function predictIndexImpactFromExponentOnly(exponentPrice, prevIndexPrice, optio
     );
     combinedDelta = cappedEffective.sub(return24h);
   }
-  const indexPriceMultiplier = import_decimal4.default.exp(combinedDelta);
+  const indexPriceMultiplier = import_decimal5.default.exp(combinedDelta);
   const predictedIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   const deltaPercent = predictedIndexPrice.div(prevIndexPrice).sub(1);
   if (options?.showLog) {
@@ -1887,6 +1895,7 @@ var getMarketParameters = (ticker, price) => {
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  ABValue,
   DEFAULT_PRICE_ALGORITHM,
   DEFAULT_TOKEN_WEIGHT,
   DEFAULT_TWITTER_VOTE_WEIGHT,

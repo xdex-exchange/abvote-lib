@@ -28,8 +28,11 @@ type InertiaOptions = {
 };
 declare function applyInertiaAndResistanceWithClamp(rawCombinedDelta: Decimal, prevDeltas: Decimal[], memoryDepth: number, options: InertiaOptions): Decimal;
 
-type TokenPriceMap = Record<string, Decimal>;
-type TokenWeightMap = Record<string, Decimal>;
+declare class ABValue {
+    readonly A: Decimal;
+    readonly B: Decimal;
+    constructor(a: Decimal.Value, b: Decimal.Value);
+}
 declare enum VoteSource {
     TWITTER = "TWITTER",
     CHAIN = "CHAIN",
@@ -90,8 +93,8 @@ type NextIndex = {
     nextIndexPrice: Decimal;
     delat: Decimal;
 };
-declare function computeBiasAdjustedIndexPrice(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): NextIndex;
-declare function computeBiasDrivenIndexPriceV2(prices: TokenPriceMap, prevPrices: TokenPriceMap, weights: TokenWeightMap, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: {
+declare function computeBiasAdjustedIndexPrice(prices: ABValue, prevPrices: ABValue, weights: ABValue, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: ComputeBiasAdjustedIndexPriceOptions): NextIndex;
+declare function computeBiasDrivenIndexPriceV2(prices: ABValue, prevPrices: ABValue, weights: ABValue, exponentPrice: Decimal, prevIndexPrice?: Decimal, options?: {
     prevBaseRatios?: Decimal[];
     inertiaOptions?: any;
     showLog?: boolean;
@@ -132,4 +135,4 @@ declare const DEFAULT_TOKEN_WEIGHT = 1000000;
 declare const DEFAULT_TWITTER_VOTE_WEIGHT = 1;
 declare const DEFAULT_PRICE_ALGORITHM = 1;
 
-export { DEFAULT_PRICE_ALGORITHM, DEFAULT_TOKEN_WEIGHT, DEFAULT_TWITTER_VOTE_WEIGHT, EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, InertiaOptions, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, TokenPriceMap, TokenWeightMap, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyInertiaAndResistanceWithClamp, computeBiasAdjustedIndexPrice, computeBiasDrivenIndexPriceV2, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
+export { ABValue, DEFAULT_PRICE_ALGORITHM, DEFAULT_TOKEN_WEIGHT, DEFAULT_TWITTER_VOTE_WEIGHT, EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, InertiaOptions, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyInertiaAndResistanceWithClamp, computeBiasAdjustedIndexPrice, computeBiasDrivenIndexPriceV2, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };

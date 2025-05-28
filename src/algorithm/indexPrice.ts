@@ -7,7 +7,7 @@ import {
   InertiaOptions,
   tanhClampDelta,
 } from "./math";
-import { TokenPriceMap, TokenWeightMap } from "../types/types";
+import { ABValue } from "../types/types";
 import {
   EXPONENT_INIT,
   INITIAL_INDEX_PRICE,
@@ -51,9 +51,9 @@ function config(options?: ComputeBiasAdjustedIndexPriceOptions): configOptions {
 }
 
 export function computeBiasAdjustedIndexPrice(
-  prices: TokenPriceMap,
-  prevPrices: TokenPriceMap,
-  weights: TokenWeightMap,
+  prices: ABValue,
+  prevPrices: ABValue,
+  weights: ABValue,
   exponentPrice: Decimal,
   prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
   options?: ComputeBiasAdjustedIndexPriceOptions
@@ -74,13 +74,13 @@ export function computeBiasAdjustedIndexPrice(
   const aaSymbol = symbols[0];
   const bbSymbol = symbols[1];
 
-  const aaPrice = prices[aaSymbol];
-  const aaPrevPrice = prevPrices[aaSymbol];
-  const bbPrice = prices[bbSymbol];
-  const bbPrevPrice = prevPrices[bbSymbol];
+  const aaPrice = prices.A;
+  const aaPrevPrice = prevPrices.A;
+  const bbPrice = prices.B;
+  const bbPrevPrice = prevPrices.B;
 
-  const aaWeight = weights[aaSymbol];
-  const bbWeight = weights[bbSymbol];
+  const aaWeight = weights.A;
+  const bbWeight = weights.B;
 
   // Check if it is valid
   if (
@@ -177,9 +177,9 @@ export function computeBiasAdjustedIndexPrice(
 }
 
 export function computeBiasDrivenIndexPriceV2(
-  prices: TokenPriceMap,
-  prevPrices: TokenPriceMap,
-  weights: TokenWeightMap,
+  prices: ABValue,
+  prevPrices: ABValue,
+  weights: ABValue,
   exponentPrice: Decimal,
   prevIndexPrice: Decimal = new Decimal(INITIAL_INDEX_PRICE),
   options?: {
@@ -192,17 +192,17 @@ export function computeBiasDrivenIndexPriceV2(
   const [a, b] = Object.keys(prices);
   if (!a || !b) throw new Error("Need exactly two tokens");
 
-  const aPrice = prices[a];
-  const bPrice = prices[b];
-  const aPrev = prevPrices[a];
-  const bPrev = prevPrices[b];
+  const aPrice = prices.A;
+  const bPrice = prices.B;
+  const aPrev = prevPrices.A;
+  const bPrev = prevPrices.B;
 
   if (aPrice.lte(0) || bPrice.lte(0) || aPrev.lte(0) || bPrev.lte(0)) {
     throw new Error("Invalid price data");
   }
 
-  const wA = weights[a];
-  const wB = weights[b];
+  const wA = weights.A;
+  const wB = weights.B;
   const totalWeight = wA.add(wB);
   const normWA = wA.div(totalWeight);
   const normWB = wB.div(totalWeight);
