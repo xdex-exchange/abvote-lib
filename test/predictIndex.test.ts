@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import {
+  ABValue,
   ExponentService,
   predictIndexImpactFromExponentOnly,
   VotedAB,
@@ -82,5 +83,8 @@ describe("predict utils", () => {
       options
     );
     console.log(`deltaPercent: ${result.deltaPercent.mul(100).toFixed(4)}%`);
+
+    const value = new ABValue("0.22811410012002892", "12.809483394925397");
+    console.log("value", value);
   });
 });

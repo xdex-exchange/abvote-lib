@@ -79,10 +79,10 @@ function applyInertiaAndResistanceWithClamp(rawCombinedDelta, prevDeltas, memory
   return rawCombinedDelta.mul(clampedFactor);
 }
 
-// node_modules/ethers/lib.esm/_version.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/_version.js
 var version = "6.13.5";
 
-// node_modules/ethers/lib.esm/utils/properties.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/properties.js
 function checkType(value, type, name) {
   const types = type.split("|").map((t) => t.trim());
   for (let i = 0; i < types.length; i++) {
@@ -115,7 +115,7 @@ function defineProperties(target, values, types) {
   }
 }
 
-// node_modules/ethers/lib.esm/utils/errors.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/errors.js
 function stringify(value) {
   if (value == null) {
     return "null";
@@ -244,7 +244,7 @@ function assertPrivate(givenGuard, guard, className) {
   }
 }
 
-// node_modules/ethers/lib.esm/utils/data.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/data.js
 function _getBytes(value, name, copy) {
   if (value instanceof Uint8Array) {
     if (copy) {
@@ -320,7 +320,7 @@ function zeroPadBytes(data, length) {
   return zeroPad(data, length, false);
 }
 
-// node_modules/ethers/lib.esm/utils/maths.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/maths.js
 var BN_0 = BigInt(0);
 var BN_1 = BigInt(1);
 var maxValue = 9007199254740991;
@@ -447,7 +447,7 @@ function toBeArray(_value) {
   return result;
 }
 
-// node_modules/ethers/lib.esm/utils/utf8.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/utf8.js
 function errorFunc(reason, offset, bytes2, output2, badCodepoint) {
   assertArgument(false, `invalid codepoint at offset ${offset}; ${reason}`, "bytes", bytes2);
 }
@@ -513,7 +513,7 @@ function toUtf8Bytes(str, form) {
   return new Uint8Array(result);
 }
 
-// node_modules/ethers/lib.esm/utils/fixednumber.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/fixednumber.js
 var BN_N1 = BigInt(-1);
 var BN_02 = BigInt(0);
 var BN_12 = BigInt(1);
@@ -1017,7 +1017,7 @@ div_fn = function(o, safeOp) {
 };
 var FixedNumber = _FixedNumber;
 
-// node_modules/ethers/lib.esm/utils/units.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/utils/units.js
 var names = [
   "wei",
   "kwei",
@@ -1040,7 +1040,7 @@ function parseUnits(value, unit) {
   return FixedNumber.fromString(value, { decimals, width: 512 }).value;
 }
 
-// node_modules/@noble/hashes/esm/_assert.js
+// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/_assert.js
 function number(n) {
   if (!Number.isSafeInteger(n) || n < 0)
     throw new Error(`Wrong positive integer: ${n}`);
@@ -1065,7 +1065,7 @@ function output(out, instance) {
   }
 }
 
-// node_modules/@noble/hashes/esm/_u64.js
+// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/_u64.js
 var U32_MASK64 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
 var _32n = /* @__PURE__ */ BigInt(32);
 function fromBig(n, le = false) {
@@ -1087,7 +1087,7 @@ var rotlSL = (h, l, s) => l << s | h >>> 32 - s;
 var rotlBH = (h, l, s) => l << s - 32 | h >>> 64 - s;
 var rotlBL = (h, l, s) => h << s - 32 | l >>> 64 - s;
 
-// node_modules/@noble/hashes/esm/utils.js
+// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/utils.js
 var u8a = (a) => a instanceof Uint8Array;
 var u32 = (arr) => new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
 var isLE = new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
@@ -1129,7 +1129,7 @@ function wrapXOFConstructorWithOpts(hashCons) {
   return hashC;
 }
 
-// node_modules/@noble/hashes/esm/sha3.js
+// node_modules/.pnpm/@noble+hashes@1.3.2/node_modules/@noble/hashes/esm/sha3.js
 var [SHA3_PI, SHA3_ROTL, _SHA3_IOTA] = [[], [], []];
 var _0n = /* @__PURE__ */ BigInt(0);
 var _1n = /* @__PURE__ */ BigInt(1);
@@ -1309,7 +1309,7 @@ var genShake = (suffix, blockLen, outputLen) => wrapXOFConstructorWithOpts((opts
 var shake128 = /* @__PURE__ */ genShake(31, 168, 128 / 8);
 var shake256 = /* @__PURE__ */ genShake(31, 136, 256 / 8);
 
-// node_modules/ethers/lib.esm/crypto/keccak.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/crypto/keccak.js
 var locked = false;
 var _keccak256 = function(data) {
   return keccak_256(data);
@@ -1331,7 +1331,7 @@ keccak256.register = function(func) {
 };
 Object.freeze(keccak256);
 
-// node_modules/ethers/lib.esm/address/address.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/address/address.js
 var BN_03 = BigInt(0);
 var BN_36 = BigInt(36);
 function getChecksumAddress(address) {
@@ -1414,7 +1414,7 @@ function getAddress(address) {
   assertArgument(false, "invalid address", "address", address);
 }
 
-// node_modules/ethers/lib.esm/hash/solidity.js
+// node_modules/.pnpm/ethers@6.13.5/node_modules/ethers/lib.esm/hash/solidity.js
 var regexBytes = new RegExp("^bytes([0-9]+)$");
 var regexNumber = new RegExp("^(u?int)([0-9]*)$");
 var regexArray = new RegExp("^(.*)\\[([0-9]*)\\]$");
@@ -1507,8 +1507,14 @@ var DEFAULT_PRICE_ALGORITHM = 1;
 import Decimal3 from "decimal.js";
 var ABValue = class {
   constructor(a, b) {
-    this.A = Decimal3(a);
-    this.B = Decimal3(b);
+    this.A = new Decimal3(a);
+    this.B = new Decimal3(b);
+  }
+  toString() {
+    return JSON.stringify({
+      A: this.A.toString(),
+      B: this.B.toString()
+    });
   }
 };
 var VoteSource = /* @__PURE__ */ ((VoteSource2) => {
@@ -1680,20 +1686,20 @@ function computeBiasAdjustedIndexPrice(prices, prevPrices, weights, exponentPric
     options?.inertiaOptions ?? {}
   );
   if (options?.showLog) {
-    console.log(`rA:${rA.toString()}`);
-    console.log(`rB:${rB.toString()}`);
-    console.log(`tokenDelta: ${tokenDelta.toString()}`);
-    console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
-    console.log(`rawBiasScaleDelta: ${rawBiasScaleDelta.toString()}`);
-    console.log(`rawCombinedDelta: ${rawCombinedDelta.toString()}`);
-    console.log(`recentVolatility: ${recentVolatility.toString()}`);
-    console.log(`dynamicMax: ${dynamicMax.toString()}`);
-    console.log(`combinedDelta: ${combinedDelta.toString()}`);
+    const log = (msg, value) => options?.logger ? options?.logger.log(`${msg} ${value}`) : console.log(`${msg} ${value}`);
+    log("rA", rA.toString());
+    log("rB", rB.toString());
+    log("tokenDelta", tokenDelta.toString());
+    log("biasShiftStrengthDelta", biasShiftStrengthDelta.toString());
+    log("rawBiasScaleDelta", rawBiasScaleDelta.toString());
+    log("rawCombinedDelta", rawCombinedDelta.toString());
+    log("recentVolatility", recentVolatility.toString());
+    log("dynamicMax", dynamicMax.toString());
+    log("combinedDelta", combinedDelta.toString());
   }
   const indexPriceMultiplier = Decimal5.exp(combinedDelta);
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
   if (!nextIndexPrice.isFinite()) {
-    console.log("nextIndexPrice is not finite");
     return {
       nextIndexPrice: ZERO,
       delat: ZERO
@@ -1740,14 +1746,15 @@ function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPric
     Decimal5.ln(prevIndexPrice).add(scaledDelta)
   );
   if (options?.showLog) {
-    console.log("\u{1F539} baseRatio:", Decimal5.exp(weightedLogNow).toFixed(6));
-    console.log("\u{1F539} prevBaseRatio:", Decimal5.exp(weightedLogPrev).toFixed(6));
-    console.log("\u{1F539} baseLogReturn:", baseLogReturn.toFixed(6));
-    console.log("\u{1F539} biasStrength:", biasStrength.toFixed(6));
-    console.log("\u{1F539} baseVolatility:", baseVolatility.toFixed(6));
-    console.log("\u{1F539} finalDelta:", combinedDelta.toFixed(6));
-    console.log("\u{1F539} scaledDelta:", scaledDelta.toFixed(6));
-    console.log("\u{1F539} nextIndexPrice:", nextIndexPrice.toFixed(7));
+    const log = (msg, value) => options?.logger ? options?.logger.log(`${msg} ${value}`) : console.log(`${msg} ${value}`);
+    log("\u{1F539} baseRatio:", Decimal5.exp(weightedLogNow).toFixed(6));
+    log("\u{1F539} prevBaseRatio:", Decimal5.exp(weightedLogPrev).toFixed(6));
+    log("\u{1F539} baseLogReturn:", baseLogReturn.toFixed(6));
+    log("\u{1F539} biasStrength:", biasStrength.toFixed(6));
+    log("\u{1F539} baseVolatility:", baseVolatility.toFixed(6));
+    log("\u{1F539} finalDelta:", combinedDelta.toFixed(6));
+    log("\u{1F539} scaledDelta:", scaledDelta.toFixed(6));
+    log("\u{1F539} nextIndexPrice:", nextIndexPrice.toFixed(7));
   }
   return {
     nextIndexPrice,

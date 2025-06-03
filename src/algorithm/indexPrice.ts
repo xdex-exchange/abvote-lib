@@ -1,5 +1,6 @@
 // src/lib/indexPrice.ts
 import Decimal from "decimal.js";
+import { LoggerService } from "@nestjs/common";
 import {
   applyInertiaAndResistanceWithClamp,
   computeLogReturn,
@@ -25,6 +26,7 @@ type ComputeBiasAdjustedIndexPriceOptions = {
   biasScaleCapPercent?: number; // The maximum amount of increase or decrease that can be zoomed in/out at a time.
   prevTokenDeltas?: Decimal[];
   showLog?: boolean;
+  logger?: LoggerService;
   inertiaOptions?: InertiaOptions;
 };
 
@@ -146,15 +148,19 @@ export function computeBiasAdjustedIndexPrice(
   );
 
   if (options?.showLog) {
-    console.log(`rA:${rA.toString()}`);
-    console.log(`rB:${rB.toString()}`);
-    console.log(`tokenDelta: ${tokenDelta.toString()}`);
-    console.log(`biasShiftStrengthDelta: ${biasShiftStrengthDelta.toString()}`);
-    console.log(`rawBiasScaleDelta: ${rawBiasScaleDelta.toString()}`);
-    console.log(`rawCombinedDelta: ${rawCombinedDelta.toString()}`);
-    console.log(`recentVolatility: ${recentVolatility.toString()}`);
-    console.log(`dynamicMax: ${dynamicMax.toString()}`);
-    console.log(`combinedDelta: ${combinedDelta.toString()}`);
+    const log = (msg: string, value: string) =>
+      options?.logger
+        ? options?.logger.log(`${msg} ${value}`)
+        : console.log(`${msg} ${value}`);
+    log("rA", rA.toString());
+    log("rB", rB.toString());
+    log("tokenDelta", tokenDelta.toString());
+    log("biasShiftStrengthDelta", biasShiftStrengthDelta.toString());
+    log("rawBiasScaleDelta", rawBiasScaleDelta.toString());
+    log("rawCombinedDelta", rawCombinedDelta.toString());
+    log("recentVolatility", recentVolatility.toString());
+    log("dynamicMax", dynamicMax.toString());
+    log("combinedDelta", combinedDelta.toString());
   }
 
   // Step 6: Multiplication of exp(Δ) from the previous price to arrive at the current indexPrice ratio (relative to the previous round)
@@ -163,7 +169,6 @@ export function computeBiasAdjustedIndexPrice(
   const nextIndexPrice = prevIndexPrice.mul(indexPriceMultiplier);
 
   if (!nextIndexPrice.isFinite()) {
-    console.log("nextIndexPrice is not finite");
     return {
       nextIndexPrice: ZERO,
       delat: ZERO,
@@ -186,6 +191,7 @@ export function computeBiasDrivenIndexPriceV2(
     prevBaseRatios?: Decimal[]; // prev A/B series, for volatility calculation
     inertiaOptions?: any;
     showLog?: boolean;
+    logger?: LoggerService;
     aa?: number;
   }
 ): NextIndex {
@@ -233,14 +239,18 @@ export function computeBiasDrivenIndexPriceV2(
   );
 
   if (options?.showLog) {
-    console.log("🔹 baseRatio:", Decimal.exp(weightedLogNow).toFixed(6));
-    console.log("🔹 prevBaseRatio:", Decimal.exp(weightedLogPrev).toFixed(6));
-    console.log("🔹 baseLogReturn:", baseLogReturn.toFixed(6));
-    console.log("🔹 biasStrength:", biasStrength.toFixed(6));
-    console.log("🔹 baseVolatility:", baseVolatility.toFixed(6));
-    console.log("🔹 finalDelta:", combinedDelta.toFixed(6));
-    console.log("🔹 scaledDelta:", scaledDelta.toFixed(6));
-    console.log("🔹 nextIndexPrice:", nextIndexPrice.toFixed(7));
+    const log = (msg: string, value: string) =>
+      options?.logger
+        ? options?.logger.log(`${msg} ${value}`)
+        : console.log(`${msg} ${value}`);
+    log("🔹 baseRatio:", Decimal.exp(weightedLogNow).toFixed(6));
+    log("🔹 prevBaseRatio:", Decimal.exp(weightedLogPrev).toFixed(6));
+    log("🔹 baseLogReturn:", baseLogReturn.toFixed(6));
+    log("🔹 biasStrength:", biasStrength.toFixed(6));
+    log("🔹 baseVolatility:", baseVolatility.toFixed(6));
+    log("🔹 finalDelta:", combinedDelta.toFixed(6));
+    log("🔹 scaledDelta:", scaledDelta.toFixed(6));
+    log("🔹 nextIndexPrice:", nextIndexPrice.toFixed(7));
   }
 
   return {

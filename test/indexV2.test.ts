@@ -1,15 +1,13 @@
 import Decimal from "decimal.js";
-import { computeBiasDrivenIndexPriceV2, TokenWeightMap } from "../src";
+import { ABValue, computeBiasDrivenIndexPriceV2 } from "../src";
 import { describe, it } from "vitest";
-
-type TokenPriceMap = Record<string, Decimal>;
 
 function runSequentialIndexSimulation(
   testSeries: {
     label?: string;
-    prices: TokenPriceMap;
-    prevPrices: TokenPriceMap;
-    tokenWeights: TokenWeightMap;
+    prices: ABValue;
+    prevPrices: ABValue;
+    tokenWeights: ABValue;
     exponentPrice: Decimal;
   }[],
   initialIndexPrice: Decimal
@@ -46,66 +44,30 @@ describe("index", () => {
       [
         {
           label: "Round 1: Slight up",
-          prices: {
-            A: new Decimal("0.22811410012002892"),
-            B: new Decimal("12.809483394925397"),
-          },
-          prevPrices: {
-            A: new Decimal("0.22811410012002892"),
-            B: new Decimal("12.816315318121726"),
-          },
-          tokenWeights: {
-            A: new Decimal("1"),
-            B: new Decimal("1"),
-          },
+          prices: new ABValue("0.22811410012002892", "12.809483394925397"),
+          prevPrices: new ABValue("0.22811410012002892", "12.816315318121726"),
+          tokenWeights: new ABValue("1", "1"),
           exponentPrice: new Decimal("1.0012"),
         },
         {
           label: "Round 2: Vote push up",
-          prices: {
-            A: new Decimal("0.229"),
-            B: new Decimal("12.80"),
-          },
-          prevPrices: {
-            A: new Decimal("0.229"),
-            B: new Decimal("12.80"),
-          },
-          tokenWeights: {
-            A: new Decimal("1"),
-            B: new Decimal("1"),
-          },
+          prices: new ABValue("0.229", "12.80"),
+          prevPrices: new ABValue("0.229", "12.80"),
+          tokenWeights: new ABValue("1", "1"),
           exponentPrice: new Decimal("1.0045"),
         },
         {
           label: "Round 3: Slight down",
-          prices: {
-            A: new Decimal("0.22811410012002892"),
-            B: new Decimal("12.812313393229338"),
-          },
-          prevPrices: {
-            A: new Decimal("0.22811410012002892"),
-            B: new Decimal("12.808923393815556"),
-          },
-          tokenWeights: {
-            A: new Decimal("1"),
-            B: new Decimal("1"),
-          },
+          prices: new ABValue("0.22811410012002892", "12.812313393229338"),
+          prevPrices: new ABValue("0.22811410012002892", "12.808923393815556"),
+          tokenWeights: new ABValue("1", "1"),
           exponentPrice: new Decimal("1.0045"),
         },
         {
           label: "Round 4: Vote push down",
-          prices: {
-            A: new Decimal("0.228"),
-            B: new Decimal("12.95"),
-          },
-          prevPrices: {
-            A: new Decimal("0.228"),
-            B: new Decimal("12.95"),
-          },
-          tokenWeights: {
-            A: new Decimal("1"),
-            B: new Decimal("1"),
-          },
+          prices: new ABValue("0.228", "12.95"),
+          prevPrices: new ABValue("0.228", "12.95"),
+          tokenWeights: new ABValue("1", "1"),
           exponentPrice: new Decimal("0.9975"),
         },
       ],
@@ -117,34 +79,16 @@ describe("index", () => {
     const rounds = [
       {
         label: "Round 1: down",
-        prices: {
-          A: new Decimal("0.22811410012002892"),
-          B: new Decimal("13.987086344488754"),
-        },
-        prevPrices: {
-          A: new Decimal("0.22811410012002892"),
-          B: new Decimal("12.816315318121726"),
-        },
-        tokenWeights: {
-          A: new Decimal("1"),
-          B: new Decimal("1"),
-        },
+        prices: new ABValue("0.22811410012002892", "13.987086344488754"),
+        prevPrices: new ABValue("0.22811410012002892", "12.816315318121726"),
+        tokenWeights: new ABValue("1", "1"),
         exponentPrice: new Decimal("1.0012"),
       },
       {
         label: "Round 2: back to original",
-        prices: {
-          A: new Decimal("0.22811410012002892"),
-          B: new Decimal("12.816315318121726"),
-        },
-        prevPrices: {
-          A: new Decimal("0.22811410012002892"),
-          B: new Decimal("13.987086344488754"),
-        },
-        tokenWeights: {
-          A: new Decimal("1"),
-          B: new Decimal("1"),
-        },
+        prices: new ABValue("0.22811410012002892", "12.816315318121726"),
+        prevPrices: new ABValue("0.22811410012002892", "13.987086344488754"),
+        tokenWeights: new ABValue("1", "1"),
         exponentPrice: new Decimal("1.0012"),
       },
     ];

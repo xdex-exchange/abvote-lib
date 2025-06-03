@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import { LoggerService } from '@nestjs/common';
 
 /**
  * Computes the log return (Logarithmic Return)
@@ -32,6 +33,7 @@ declare class ABValue {
     readonly A: Decimal;
     readonly B: Decimal;
     constructor(a: Decimal.Value, b: Decimal.Value);
+    toString(): string;
 }
 declare enum VoteSource {
     TWITTER = "TWITTER",
@@ -87,6 +89,7 @@ type ComputeBiasAdjustedIndexPriceOptions = {
     biasScaleCapPercent?: number;
     prevTokenDeltas?: Decimal[];
     showLog?: boolean;
+    logger?: LoggerService;
     inertiaOptions?: InertiaOptions;
 };
 type NextIndex = {
@@ -98,6 +101,7 @@ declare function computeBiasDrivenIndexPriceV2(prices: ABValue, prevPrices: ABVa
     prevBaseRatios?: Decimal[];
     inertiaOptions?: any;
     showLog?: boolean;
+    logger?: LoggerService;
     aa?: number;
 }): NextIndex;
 type PredictedIndexImpact = {

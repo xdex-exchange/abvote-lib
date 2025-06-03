@@ -1,24 +1,23 @@
-import { computeBiasDrivenIndexPriceV2, TokenWeightMap } from "../src";
+import { ABValue, computeBiasDrivenIndexPriceV2 } from "../src";
 import { describe, it } from "vitest";
 import Decimal from "decimal.js";
 import rawData from "./abvote_public_oracle_price_history.json";
-
-type TokenPriceMap = Record<string, Decimal>;
+import { Logger } from "@nestjs/common";
 
 type Round = {
   label?: string;
-  prices: TokenPriceMap;
-  prevPrices: TokenPriceMap;
-  tokenWeights: TokenWeightMap;
+  prices: ABValue;
+  prevPrices: ABValue;
+  tokenWeights: ABValue;
   exponentPrice: Decimal;
 };
 
 function runSequentialIndexSimulation(
   testSeries: {
     label?: string;
-    prices: TokenPriceMap;
-    prevPrices: TokenPriceMap;
-    tokenWeights: TokenWeightMap;
+    prices: ABValue;
+    prevPrices: ABValue;
+    tokenWeights: ABValue;
     exponentPrice: Decimal;
   }[],
   initialIndexPrice: Decimal
@@ -38,6 +37,7 @@ function runSequentialIndexSimulation(
       prevIndexPrice,
       {
         showLog: true,
+        logger: new Logger(),
       }
     );
     console.log(`Prev Index Price: ${prevIndexPrice.toFixed(7)}`);
@@ -65,31 +65,24 @@ function parseRounds(rawData: any[], exponentPrice: Decimal): Round[] {
     const current = rawData[i];
     const tokenPrices = JSON.parse(current.tokenPrices);
 
-    const prices = {
-      A: new Decimal(tokenPrices[addressMap.A]),
-      B: new Decimal(tokenPrices[addressMap.B]),
-    };
+    const prices = new ABValue(
+      tokenPrices[addressMap.A],
+      tokenPrices[addressMap.B]
+    );
 
     const prevPrices =
       i === 0
         ? prices
-        : {
-            A: new Decimal(
-              JSON.parse(rawData[i - 1].tokenPrices)[addressMap.A]
-            ),
-            B: new Decimal(
-              JSON.parse(rawData[i - 1].tokenPrices)[addressMap.B]
-            ),
-          };
+        : new ABValue(
+            JSON.parse(rawData[i - 1].tokenPrices)[addressMap.A],
+            JSON.parse(rawData[i - 1].tokenPrices)[addressMap.B]
+          );
 
     rounds.push({
       label: `Round ${i + 1}`,
       prices,
       prevPrices,
-      tokenWeights: {
-        A: new Decimal("1"),
-        B: new Decimal("1"),
-      },
+      tokenWeights: new ABValue("1", "1"),
       exponentPrice,
     });
   }
