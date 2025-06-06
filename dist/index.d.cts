@@ -103,6 +103,7 @@ declare function computeBiasDrivenIndexPriceV2(prices: ABValue, prevPrices: ABVa
     showLog?: boolean;
     logger?: LoggerService;
     sensitivityBase?: number;
+    twitterVoteWeight?: Decimal;
 }): NextIndex;
 type PredictedIndexImpact = {
     predictedIndexPrice: Decimal;

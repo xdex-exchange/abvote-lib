@@ -25,6 +25,7 @@ function runSequentialIndexSimulation(
       {
         showLog: true,
         sensitivityBase: 0.4,
+        twitterVoteWeight: new Decimal(0),
         logger: new Logger(),
       }
     );

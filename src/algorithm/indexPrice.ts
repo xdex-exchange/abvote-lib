@@ -196,6 +196,7 @@ export function computeBiasDrivenIndexPriceV2(
     showLog?: boolean;
     logger?: LoggerService;
     sensitivityBase?: number;
+    twitterVoteWeight?: Decimal;
   }
 ): NextIndex {
   const [a, b] = Object.keys(prices);
@@ -225,7 +226,11 @@ export function computeBiasDrivenIndexPriceV2(
 
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
 
-  const biasStrength = exponentPrice.sub(DEFAULT_TWITTER_VOTE_WEIGHT);
+  const twitterVoteWeight =
+    options?.twitterVoteWeight ?? DEFAULT_TWITTER_VOTE_WEIGHT;
+  const weightExponentPrice = exponentPrice.mul(twitterVoteWeight);
+
+  const biasStrength = weightExponentPrice.sub(twitterVoteWeight);
   const biasDelta = baseLogReturn.mul(biasStrength);
   let combinedDelta = baseLogReturn.add(biasDelta);
 

@@ -35,6 +35,7 @@ function runSequentialIndexSimulation(
       {
         showLog: true,
         sensitivityBase: 0.4,
+        twitterVoteWeight: new Decimal(0),
       }
     );
     console.log(`Prev Index Price: ${prevIndexPrice.toFixed(7)}`);
@@ -54,18 +55,13 @@ function runSequentialIndexSimulation(
   return indexPrices;
 }
 
-function getWeightPrice(
-  exponentService: ExponentService,
-  number: number,
-  weight: number
-) {
+function getExponentPrice(exponentService: ExponentService, number: number) {
   exponentService.computeExponent(number, VoteSource.TWITTER, VotedAB.A);
   const ex = exponentService.getExponent();
   const b = new Decimal(ex.b.toString());
   const a = new Decimal(ex.a.toString());
   const exponentPrice = b.div(a);
-  const weightedExponentPrice = exponentPrice.mul(new Decimal(weight));
-  return weightedExponentPrice;
+  return exponentPrice;
 }
 
 describe("index", () => {
@@ -76,11 +72,7 @@ describe("index", () => {
 
     {
       const exponentService = new ExponentService();
-      const w1 = getWeightPrice(
-        exponentService,
-        0,
-        DEFAULT_TWITTER_VOTE_WEIGHT
-      );
+      const w1 = getExponentPrice(exponentService, 0);
 
       indexPrices1 = runSequentialIndexSimulation(
         [
@@ -108,11 +100,7 @@ describe("index", () => {
 
     {
       const exponentService = new ExponentService();
-      const w1 = getWeightPrice(
-        exponentService,
-        1000000,
-        DEFAULT_TWITTER_VOTE_WEIGHT
-      );
+      const w1 = getExponentPrice(exponentService, 1000000);
 
       indexPrices2 = runSequentialIndexSimulation(
         [

@@ -1735,7 +1735,9 @@ function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPric
   const weightedLogNow = logA.mul(normWA).sub(logB.mul(normWB));
   const weightedLogPrev = logAPrev.mul(normWA).sub(logBPrev.mul(normWB));
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
-  const biasStrength = exponentPrice.sub(DEFAULT_TWITTER_VOTE_WEIGHT);
+  const twitterVoteWeight = options?.twitterVoteWeight ?? DEFAULT_TWITTER_VOTE_WEIGHT;
+  const weightExponentPrice = exponentPrice.mul(twitterVoteWeight);
+  const biasStrength = weightExponentPrice.sub(twitterVoteWeight);
   const biasDelta = baseLogReturn.mul(biasStrength);
   let combinedDelta = baseLogReturn.add(biasDelta);
   const baseVolatility = computeVolatility([combinedDelta]);
