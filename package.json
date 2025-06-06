@@ -22,13 +22,14 @@
     "testPredict": "vitest test/predictIndex.test.ts",
     "testIndex": "vitest test/index.test.ts",
     "testIndexV2": "vitest test/indexV2.test.ts",
-    "index": "vitest test/indexT.test.ts"
+    "simPriceFromFile": "vitest test/simPriceFromFile.test.ts"
   },
   "devDependencies": {
     "ethers": "^6.13.5",
     "tsup": "^7.2.0",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.0"
+    "vitest": "^1.2.0",
+    "xlsx": "^0.18.5"
   },
   "dependencies": {
     "decimal.js": "^10.4.3",

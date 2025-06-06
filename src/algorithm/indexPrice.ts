@@ -10,8 +10,11 @@ import {
 } from "./math";
 import { ABValue } from "../types/types";
 import {
+  DEFAULT_SENSITIVITY_BASE,
+  DEFAULT_TWITTER_VOTE_WEIGHT,
   EXPONENT_INIT,
   INITIAL_INDEX_PRICE,
+  MIN_BETA,
   MIN_DYNAMIC,
   ZERO,
 } from "../constants/constants";
@@ -192,7 +195,7 @@ export function computeBiasDrivenIndexPriceV2(
     inertiaOptions?: any;
     showLog?: boolean;
     logger?: LoggerService;
-    aa?: number;
+    sensitivityBase?: number;
   }
 ): NextIndex {
   const [a, b] = Object.keys(prices);
@@ -222,15 +225,17 @@ export function computeBiasDrivenIndexPriceV2(
 
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
 
-  const biasStrength = exponentPrice.sub(1);
+  const biasStrength = exponentPrice.sub(DEFAULT_TWITTER_VOTE_WEIGHT);
   const biasDelta = baseLogReturn.mul(biasStrength);
   let combinedDelta = baseLogReturn.add(biasDelta);
 
   const baseVolatility = computeVolatility([combinedDelta]);
 
+  const sensitivityBase = options?.sensitivityBase ?? DEFAULT_SENSITIVITY_BASE;
+
   const beta = Decimal.max(
-    1,
-    Decimal.pow(options?.aa ?? 100, Decimal.sub(1, baseVolatility.mul(100)))
+    MIN_BETA,
+    Decimal.pow(sensitivityBase, Decimal.sub(1, baseVolatility))
   );
   const scaledDelta = combinedDelta.mul(beta);
 

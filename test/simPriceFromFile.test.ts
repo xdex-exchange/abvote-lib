@@ -3,26 +3,13 @@ import { describe, it } from "vitest";
 import Decimal from "decimal.js";
 import rawData from "./abvote_public_oracle_price_history.json";
 import { Logger } from "@nestjs/common";
-
-type Round = {
-  label?: string;
-  prices: ABValue;
-  prevPrices: ABValue;
-  tokenWeights: ABValue;
-  exponentPrice: Decimal;
-};
+import { Round, writeIndexPricesToExcel } from "./utils";
 
 function runSequentialIndexSimulation(
-  testSeries: {
-    label?: string;
-    prices: ABValue;
-    prevPrices: ABValue;
-    tokenWeights: ABValue;
-    exponentPrice: Decimal;
-  }[],
+  testSeries: Round[],
   initialIndexPrice: Decimal
 ) {
-  let indexPrices = [initialIndexPrice.toFixed(7)];
+  let indexPrices = [initialIndexPrice];
   let prevIndexPrice = initialIndexPrice;
 
   testSeries.forEach((test, i) => {
@@ -37,6 +24,7 @@ function runSequentialIndexSimulation(
       prevIndexPrice,
       {
         showLog: true,
+        sensitivityBase: 0.4,
         logger: new Logger(),
       }
     );
@@ -45,7 +33,7 @@ function runSequentialIndexSimulation(
     console.log(`Delta Applied: ${result.delat.toFixed(6)}`);
 
     prevIndexPrice = result.nextIndexPrice;
-    indexPrices.push(result.nextIndexPrice.toFixed(7));
+    indexPrices.push(result.nextIndexPrice);
   });
 
   return indexPrices;
@@ -94,9 +82,14 @@ describe("index", () => {
   it("series", async () => {
     const rev = rawData.reverse();
     const rounds = parseRounds(rev, exponentPrice);
-    const initialIndexPrice = rounds[0].prices["B"].div(rounds[0].prices["A"]);
+    const initialIndexPrice = new Decimal("0.01");
 
     const indexPrices = runSequentialIndexSimulation(rounds, initialIndexPrice);
-    console.log("indexPrices", indexPrices);
+
+    writeIndexPricesToExcel(
+      rounds,
+      indexPrices,
+      "my_index_prices_with_delta.xlsx"
+    );
   });
 });

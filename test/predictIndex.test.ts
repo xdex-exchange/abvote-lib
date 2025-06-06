@@ -1,90 +1,158 @@
 import Decimal from "decimal.js";
 import {
   ABValue,
+  computeBiasDrivenIndexPriceV2,
+  DEFAULT_TWITTER_VOTE_WEIGHT,
   ExponentService,
-  predictIndexImpactFromExponentOnly,
   VotedAB,
   VoteSource,
 } from "../src";
 import { describe, it } from "vitest";
 
-function testPredictIndexImpact() {
-  const prevIndexPrice = new Decimal("0.005079775510208490099");
-  const price24hAgo = new Decimal("0.0050829437880038297502");
+function runSequentialIndexSimulation(
+  testSeries: {
+    label?: string;
+    prices: ABValue;
+    prevPrices: ABValue;
+    tokenWeights: ABValue;
+    exponentPrice: Decimal;
+  }[],
+  initialIndexPrice: Decimal
+) {
+  let indexPrices = [initialIndexPrice];
+  let prevIndexPrice = initialIndexPrice;
 
-  const options = {
-    maxDailyPercent: 50,
-    price24hAgo,
-    prevTokenDeltas: [
-      new Decimal("-0.043938655308389717227"),
-      new Decimal("-0.018281412807738909623"),
-      new Decimal("0.0094312860159767609877"),
-      new Decimal("0.029325543555792175065"),
-      new Decimal("-0.011316175012344287543"),
-    ],
-    showLog: true,
-  };
-
-  const testExponents = [
-    new Decimal("0.909980071550066589"), // Extremely strong down
-    new Decimal("0.959980071550066589"), // Stronger down
-    new Decimal("0.999980071550066589"), // Faint down
-    new Decimal("1.00"), // Neutral
-    new Decimal("1.000019928449933"), // Faint upward
-    new Decimal("1.040019928449933"), // stronger upward
-    new Decimal("1.090019928449933"), // Extremely strong upward
-  ];
-
-  for (const exponentPrice of testExponents) {
-    const result = predictIndexImpactFromExponentOnly(
-      exponentPrice,
-      prevIndexPrice,
-      options
-    );
-
-    console.log(`\n===== Exponent: ${exponentPrice.toString()} =====`);
+  testSeries.forEach((test, i) => {
     console.log(
-      `Predicted Index Price: ${result.predictedIndexPrice.toFixed(6)}`
+      `\n=== ⏱️ ROUND ${i + 1} ${test.label ? `(${test.label})` : ""} ===`
     );
-    console.log(`Δ%: ${result.deltaPercent.mul(100).toFixed(4)}%\n`);
-  }
+    const result = computeBiasDrivenIndexPriceV2(
+      test.prices,
+      test.prevPrices,
+      test.tokenWeights,
+      test.exponentPrice,
+      prevIndexPrice,
+      {
+        showLog: true,
+        sensitivityBase: 0.4,
+      }
+    );
+    console.log(`Prev Index Price: ${prevIndexPrice.toFixed(7)}`);
+    console.log(`Next Index Price: ${result.nextIndexPrice.toFixed(7)}`);
+    // console.log(
+    //   `Applied: ${result.nextIndexPrice
+    //     .div(prevIndexPrice)
+    //     .sub(1)
+    //     .mul(100)
+    //     .toFixed(6)}%`
+    // );
+
+    prevIndexPrice = result.nextIndexPrice;
+    indexPrices.push(result.nextIndexPrice);
+  });
+
+  return indexPrices;
 }
 
-describe("predict utils", () => {
-  it("predict index from exponent", () => {
-    testPredictIndexImpact();
-  });
-  it("predict index from exponent", () => {
-    const prevIndexPrice = new Decimal("0.005079775510208490099");
-    const price24hAgo = new Decimal("0.0050829437880038297502");
+function getWeightPrice(
+  exponentService: ExponentService,
+  number: number,
+  weight: number
+) {
+  exponentService.computeExponent(number, VoteSource.TWITTER, VotedAB.A);
+  const ex = exponentService.getExponent();
+  const b = new Decimal(ex.b.toString());
+  const a = new Decimal(ex.a.toString());
+  const exponentPrice = b.div(a);
+  const weightedExponentPrice = exponentPrice.mul(new Decimal(weight));
+  return weightedExponentPrice;
+}
 
-    const options = {
-      maxDailyPercent: 50,
-      price24hAgo,
-      prevTokenDeltas: [
-        new Decimal("-0.043938655308389717227"),
-        new Decimal("-0.018281412807738909623"),
-        new Decimal("0.0094312860159767609877"),
-        new Decimal("0.029325543555792175065"),
-        new Decimal("-0.011316175012344287543"),
-      ],
-      showLog: true,
-    };
-    const exponentService = new ExponentService();
-    exponentService.computeExponent(30, VoteSource.USER, VotedAB.A);
-    const ex = exponentService.getExponent();
-    const b = new Decimal(ex.b.toString());
-    const a = new Decimal(ex.a.toString());
-    const exponentPrice = b.div(a);
-    const weightedExponentPrice = exponentPrice.mul(new Decimal(1));
-    const result = predictIndexImpactFromExponentOnly(
-      weightedExponentPrice,
-      prevIndexPrice,
-      options
-    );
-    console.log(`deltaPercent: ${result.deltaPercent.mul(100).toFixed(4)}%`);
+describe("index", () => {
+  it("indexV2 - sequential simulation", () => {
+    const initialIndexPrice = new Decimal("0.01");
+    let indexPrices1: Decimal[];
+    let indexPrices2: Decimal[];
 
-    const value = new ABValue("0.22811410012002892", "12.809483394925397");
-    console.log("value", value);
+    {
+      const exponentService = new ExponentService();
+      const w1 = getWeightPrice(
+        exponentService,
+        0,
+        DEFAULT_TWITTER_VOTE_WEIGHT
+      );
+
+      indexPrices1 = runSequentialIndexSimulation(
+        [
+          {
+            label: "Round 1: 10 up",
+            prices: new ABValue("12.82460861209476", "0.22730061228727097"),
+            prevPrices: new ABValue("12.82260861209476", "0.22730061228727097"),
+            tokenWeights: new ABValue("1", "1"),
+            exponentPrice: w1,
+          },
+          // {
+          //   label: "Round 2: 50 up",
+          //   prices: new ABValue("12.835466574976376", "0.22730061228727097"),
+          //   prevPrices: new ABValue(
+          //     "12.830758817100717",
+          //     "0.22730061228727097"
+          //   ),
+          //   tokenWeights: new ABValue("1", "1"),
+          //   exponentPrice: w1,
+          // },
+        ],
+        initialIndexPrice
+      );
+    }
+
+    {
+      const exponentService = new ExponentService();
+      const w1 = getWeightPrice(
+        exponentService,
+        1000000,
+        DEFAULT_TWITTER_VOTE_WEIGHT
+      );
+
+      indexPrices2 = runSequentialIndexSimulation(
+        [
+          {
+            label: "Round 1: 10 up",
+            prices: new ABValue("12.82460861209476", "0.22730061228727097"),
+            prevPrices: new ABValue("12.82260861209476", "0.22730061228727097"),
+            tokenWeights: new ABValue("1", "1"),
+            exponentPrice: w1,
+          },
+          // {
+          //   label: "Round 2: 50 up",
+          //   prices: new ABValue("12.835466574976376", "0.22730061228727097"),
+          //   prevPrices: new ABValue(
+          //     "12.830758817100717",
+          //     "0.22730061228727097"
+          //   ),
+          //   tokenWeights: new ABValue("1", "1"),
+          //   exponentPrice: w1,
+          // },
+        ],
+        initialIndexPrice
+      );
+    }
+
+    // Compare two series
+    console.log(`\n=== 📊 COMPARISON: indexPrices2 vs indexPrices1 ===`);
+
+    for (let i = 0; i < indexPrices1.length; i++) {
+      const basePrice = indexPrices1[i];
+      const comparePrice = indexPrices2[i];
+      const pctChange = comparePrice.div(basePrice).sub(1).mul(100).toFixed(6);
+
+      console.log(
+        `Round ${
+          i + 1
+        }: index2:${comparePrice} / index1:${basePrice} = ${comparePrice
+          .div(basePrice)
+          .toFixed(7)} (${pctChange}%)`
+      );
+    }
   });
 });

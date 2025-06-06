@@ -59,6 +59,7 @@ var src_exports = {};
 __export(src_exports, {
   ABValue: () => ABValue,
   DEFAULT_PRICE_ALGORITHM: () => DEFAULT_PRICE_ALGORITHM,
+  DEFAULT_SENSITIVITY_BASE: () => DEFAULT_SENSITIVITY_BASE,
   DEFAULT_TOKEN_WEIGHT: () => DEFAULT_TOKEN_WEIGHT,
   DEFAULT_TWITTER_VOTE_WEIGHT: () => DEFAULT_TWITTER_VOTE_WEIGHT,
   EXPONENT_DECIMALS: () => EXPONENT_DECIMALS,
@@ -69,6 +70,7 @@ __export(src_exports, {
   INITIAL_EXPONENT_WC: () => INITIAL_EXPONENT_WC,
   INITIAL_EXPONENT_WT: () => INITIAL_EXPONENT_WT,
   INITIAL_INDEX_PRICE: () => INITIAL_INDEX_PRICE,
+  MIN_BETA: () => MIN_BETA,
   MIN_DYNAMIC: () => MIN_DYNAMIC,
   MIN_PRICE_CHANGE_PPM: () => MIN_PRICE_CHANGE_PPM,
   ORACLE_PRICE_DECIMAL: () => ORACLE_PRICE_DECIMAL,
@@ -1562,8 +1564,10 @@ var TWITTER_VOTE_AMOUNT = 10;
 var USER_VOTE_AMOUNT = 1;
 var ZERO = new import_decimal2.default(0);
 var MIN_DYNAMIC = new import_decimal2.default(0.01);
+var MIN_BETA = 0.1;
+var DEFAULT_SENSITIVITY_BASE = 1;
 var DEFAULT_TOKEN_WEIGHT = 1e6;
-var DEFAULT_TWITTER_VOTE_WEIGHT = 1;
+var DEFAULT_TWITTER_VOTE_WEIGHT = 0;
 var DEFAULT_PRICE_ALGORITHM = 1;
 
 // src/types/types.ts
@@ -1796,13 +1800,14 @@ function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPric
   const weightedLogNow = logA.mul(normWA).sub(logB.mul(normWB));
   const weightedLogPrev = logAPrev.mul(normWA).sub(logBPrev.mul(normWB));
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
-  const biasStrength = exponentPrice.sub(1);
+  const biasStrength = exponentPrice.sub(DEFAULT_TWITTER_VOTE_WEIGHT);
   const biasDelta = baseLogReturn.mul(biasStrength);
   let combinedDelta = baseLogReturn.add(biasDelta);
   const baseVolatility = computeVolatility([combinedDelta]);
+  const sensitivityBase = options?.sensitivityBase ?? DEFAULT_SENSITIVITY_BASE;
   const beta = import_decimal5.default.max(
-    1,
-    import_decimal5.default.pow(options?.aa ?? 100, import_decimal5.default.sub(1, baseVolatility.mul(100)))
+    MIN_BETA,
+    import_decimal5.default.pow(sensitivityBase, import_decimal5.default.sub(1, baseVolatility))
   );
   const scaledDelta = combinedDelta.mul(beta);
   const nextIndexPrice = import_decimal5.default.exp(
@@ -1904,6 +1909,7 @@ var getMarketParameters = (ticker, price) => {
 0 && (module.exports = {
   ABValue,
   DEFAULT_PRICE_ALGORITHM,
+  DEFAULT_SENSITIVITY_BASE,
   DEFAULT_TOKEN_WEIGHT,
   DEFAULT_TWITTER_VOTE_WEIGHT,
   EXPONENT_DECIMALS,
@@ -1914,6 +1920,7 @@ var getMarketParameters = (ticker, price) => {
   INITIAL_EXPONENT_WC,
   INITIAL_EXPONENT_WT,
   INITIAL_INDEX_PRICE,
+  MIN_BETA,
   MIN_DYNAMIC,
   MIN_PRICE_CHANGE_PPM,
   ORACLE_PRICE_DECIMAL,

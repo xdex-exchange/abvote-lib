@@ -1499,8 +1499,10 @@ var TWITTER_VOTE_AMOUNT = 10;
 var USER_VOTE_AMOUNT = 1;
 var ZERO = new Decimal2(0);
 var MIN_DYNAMIC = new Decimal2(0.01);
+var MIN_BETA = 0.1;
+var DEFAULT_SENSITIVITY_BASE = 1;
 var DEFAULT_TOKEN_WEIGHT = 1e6;
-var DEFAULT_TWITTER_VOTE_WEIGHT = 1;
+var DEFAULT_TWITTER_VOTE_WEIGHT = 0;
 var DEFAULT_PRICE_ALGORITHM = 1;
 
 // src/types/types.ts
@@ -1733,13 +1735,14 @@ function computeBiasDrivenIndexPriceV2(prices, prevPrices, weights, exponentPric
   const weightedLogNow = logA.mul(normWA).sub(logB.mul(normWB));
   const weightedLogPrev = logAPrev.mul(normWA).sub(logBPrev.mul(normWB));
   const baseLogReturn = weightedLogNow.sub(weightedLogPrev);
-  const biasStrength = exponentPrice.sub(1);
+  const biasStrength = exponentPrice.sub(DEFAULT_TWITTER_VOTE_WEIGHT);
   const biasDelta = baseLogReturn.mul(biasStrength);
   let combinedDelta = baseLogReturn.add(biasDelta);
   const baseVolatility = computeVolatility([combinedDelta]);
+  const sensitivityBase = options?.sensitivityBase ?? DEFAULT_SENSITIVITY_BASE;
   const beta = Decimal5.max(
-    1,
-    Decimal5.pow(options?.aa ?? 100, Decimal5.sub(1, baseVolatility.mul(100)))
+    MIN_BETA,
+    Decimal5.pow(sensitivityBase, Decimal5.sub(1, baseVolatility))
   );
   const scaledDelta = combinedDelta.mul(beta);
   const nextIndexPrice = Decimal5.exp(
@@ -1840,6 +1843,7 @@ var getMarketParameters = (ticker, price) => {
 export {
   ABValue,
   DEFAULT_PRICE_ALGORITHM,
+  DEFAULT_SENSITIVITY_BASE,
   DEFAULT_TOKEN_WEIGHT,
   DEFAULT_TWITTER_VOTE_WEIGHT,
   EXPONENT_DECIMALS,
@@ -1850,6 +1854,7 @@ export {
   INITIAL_EXPONENT_WC,
   INITIAL_EXPONENT_WT,
   INITIAL_INDEX_PRICE,
+  MIN_BETA,
   MIN_DYNAMIC,
   MIN_PRICE_CHANGE_PPM,
   ORACLE_PRICE_DECIMAL,

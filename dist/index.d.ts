@@ -102,7 +102,7 @@ declare function computeBiasDrivenIndexPriceV2(prices: ABValue, prevPrices: ABVa
     inertiaOptions?: any;
     showLog?: boolean;
     logger?: LoggerService;
-    aa?: number;
+    sensitivityBase?: number;
 }): NextIndex;
 type PredictedIndexImpact = {
     predictedIndexPrice: Decimal;
@@ -135,8 +135,10 @@ declare const TWITTER_VOTE_AMOUNT = 10;
 declare const USER_VOTE_AMOUNT = 1;
 declare const ZERO: Decimal;
 declare const MIN_DYNAMIC: Decimal;
+declare const MIN_BETA = 0.1;
+declare const DEFAULT_SENSITIVITY_BASE = 1;
 declare const DEFAULT_TOKEN_WEIGHT = 1000000;
-declare const DEFAULT_TWITTER_VOTE_WEIGHT = 1;
+declare const DEFAULT_TWITTER_VOTE_WEIGHT = 0;
 declare const DEFAULT_PRICE_ALGORITHM = 1;
 
-export { ABValue, DEFAULT_PRICE_ALGORITHM, DEFAULT_TOKEN_WEIGHT, DEFAULT_TWITTER_VOTE_WEIGHT, EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, InertiaOptions, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyInertiaAndResistanceWithClamp, computeBiasAdjustedIndexPrice, computeBiasDrivenIndexPriceV2, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
+export { ABValue, DEFAULT_PRICE_ALGORITHM, DEFAULT_SENSITIVITY_BASE, DEFAULT_TOKEN_WEIGHT, DEFAULT_TWITTER_VOTE_WEIGHT, EXPONENT_DECIMALS, EXPONENT_HALF_DECIMALS, EXPONENT_INIT, ExponentService, INITIAL_EXPONENT, INITIAL_EXPONENT_WC, INITIAL_EXPONENT_WT, INITIAL_INDEX_PRICE, InertiaOptions, MIN_BETA, MIN_DYNAMIC, MIN_PRICE_CHANGE_PPM, NextIndex, ORACLE_PRICE_DECIMAL, TWITTER_VOTE_AMOUNT, USER_VOTE_AMOUNT, VoteSource, VotedAB, ZERO, applyInertiaAndResistanceWithClamp, computeBiasAdjustedIndexPrice, computeBiasDrivenIndexPriceV2, computeLogReturn, computeVolatility, generateEventHash, getMarketParameters, getPriceAtomicResolution, predictIndexImpactFromExponentOnly, tanhClampDelta };
