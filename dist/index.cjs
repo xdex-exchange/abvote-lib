@@ -1567,7 +1567,7 @@ var MIN_DYNAMIC = new import_decimal2.default(0.01);
 var MIN_BETA = 0.1;
 var DEFAULT_SENSITIVITY_BASE = 1;
 var DEFAULT_TOKEN_WEIGHT = 1e6;
-var DEFAULT_TWITTER_VOTE_WEIGHT = 0;
+var DEFAULT_TWITTER_VOTE_WEIGHT = 1e4;
 var DEFAULT_PRICE_ALGORITHM = 1;
 
 // src/types/types.ts

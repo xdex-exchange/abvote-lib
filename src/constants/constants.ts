@@ -20,5 +20,5 @@ export const MIN_DYNAMIC = new Decimal(0.01);
 export const MIN_BETA = 0.1;
 export const DEFAULT_SENSITIVITY_BASE = 1;
 export const DEFAULT_TOKEN_WEIGHT = 1000000;
-export const DEFAULT_TWITTER_VOTE_WEIGHT = 0;
+export const DEFAULT_TWITTER_VOTE_WEIGHT = 10000;
 export const DEFAULT_PRICE_ALGORITHM = 1;
